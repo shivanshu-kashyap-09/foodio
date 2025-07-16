@@ -6,9 +6,11 @@ import { toast } from 'react-toastify';
 
 const DishCard = ({ dish_name, dish_image, dish_description, dish_price, dish_rating }) => {
 
+  const USER_ID = localStorage.getItem('user_id');
+
   const handleWhishList = async () => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_URL}/whishlist/insert/1`, {
+      const response = await axios.post(`${import.meta.env.VITE_URL}/whishlist/insert/${USER_ID}`, {
         dish_img: dish_image,
         dish_name,
         dish_price,
@@ -26,7 +28,7 @@ const DishCard = ({ dish_name, dish_image, dish_description, dish_price, dish_ra
 
   const handleCart = async () => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_URL}/cart/insert/1`, {
+      const response = await axios.post(`${import.meta.env.VITE_URL}/cart/insert/${USER_ID}`, {
         dish_img: dish_image,
         dish_name,
         dish_price,

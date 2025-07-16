@@ -11,6 +11,9 @@ import Signup from "./Pages/Signup";
 import Choose from './Components/Choose';
 import Contact from './Components/Contact';
 import Forget from './Pages/Forget';
+import Profile from './Pages/Profile';
+import ThaliDesc from './Pages/ThaliDesc';
+import RestaurantById from './Pages/RestaurantById';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -29,6 +32,9 @@ const App = () => {
           <Route path="login" element={<Login />} />
           <Route path="signup" element={<Signup />} />
           <Route path='/forget-password' element={<Forget />} />
+          <Route path='/profile' element={<Profile />} />
+          <Route path='/thali/description/:thali_id' element={<ThaliDesc/>} />
+          <Route path='/restaurant/:type/:res_name/:res_id' element={<RestaurantById/>} />
         </Route>
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} />

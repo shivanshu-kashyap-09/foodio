@@ -1,11 +1,16 @@
 import React from 'react'
 // import dish from "../assets/logo.png"
 import { FaHeart, FaPhone, FaRupeeSign, FaShoppingCart, FaStar } from 'react-icons/fa';
-import { FaMapLocation } from 'react-icons/fa6';
+import { useNavigate } from 'react-router-dom';
 
-const RestaurantCard = ({ restaurant }) => {
+const RestaurantCard = ({ restaurant, type }) => {
+  const navigate = useNavigate();
+  const handleRestaurantById = async () => {
+    navigate(`/restaurant/${type}/${restaurant.res_name}/${restaurant.res_id}`)
+  }
   return (
-    <div className="w-64 rounded-3xl bg-gradient-to-b from-gray-200 to-red-100 shadow-xl p-4 relative text-center ml-7 ">
+    <div className="w-64 rounded-3xl bg-gradient-to-b from-gray-200 to-red-100 shadow-xl p-4 relative text-center ml-7 mb-4"
+    onClick={handleRestaurantById}>
       <div className="relative">
         <img src={restaurant.res_img} alt={restaurant.res_name} className="rounded-full mx-auto w-40 h-40 object-cover shadow-md" />
         <div className="absolute top-0 -right-3 bg-green-700 text-red-200 hover:bg-red-300 hover:text-red-600 rounded-full p-2">
