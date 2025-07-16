@@ -257,7 +257,7 @@ const Home = () => {
 
   const handleVeg = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/vegmenu/id/1`);
+      const response = await axios.get(`${import.meta.env.VITE_URL}/vegmenu/id/2`);
       if (response.status == 200) {
         setVegDish(response.data);
       }

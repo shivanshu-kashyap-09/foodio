@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
+import { useNavigate } from 'react-router-dom';
+
 // import logo from "../assets/logo.png"
 
 const Thali = ({thalis}) => {
+  const navigate = useNavigate();
+
   const settings = {
     dots: false,
     infinite: true,
@@ -31,6 +35,10 @@ const Thali = ({thalis}) => {
     ],
   };
 
+  const handleThali = (thaliId) => {
+  navigate(`/thali/description/${thaliId}`);
+};
+
   return (
     <div className="w-full py-12 bg-white">
       <div className="max-w-7xl mx-auto px-6">
@@ -38,7 +46,8 @@ const Thali = ({thalis}) => {
         <Slider {...settings}>
           {thalis.map((thali, index) => (
             <div key={index} className="px-2">
-              <div className="bg-white rounded-xl text-center h-92 shadow-md overflow-hidden">
+              <div className="bg-white rounded-xl text-center h-92 shadow-md overflow-hidden"
+              onClick={() => handleThali(thali.thali_id)}>
                 <img
                   src={thali.thali_img}
                   alt={thali.thali_name}

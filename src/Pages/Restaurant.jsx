@@ -3,6 +3,7 @@ import RestaurantCard from "../Components/RestaurantCard";
 import Menu from "../Components/Menu";
 import DishCard from "../Components/DishCard";
 import axios from 'axios';
+
 const Restaurant = () => {
   const [vegRes, setVegRes] = useState([]);
   const [nonVegRes, setNonVegRes] = useState([]);
@@ -48,7 +49,7 @@ const Restaurant = () => {
 
   const handleVegResMenu = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/vegmenu/id/${vegRes[0].res_id}`);
+      const response = await axios.get(`${import.meta.env.VITE_URL}/vegmenu/id/${vegRes[1].res_id}`);
       if (response.status == 200) {
         setVegMenu(response.data);
       }
@@ -112,27 +113,27 @@ const Restaurant = () => {
       <h2 className='text-red-900 font-bold text-4xl text-center mt-5 mb-10'>VEG RESTAURANT</h2>
       <div className='grid grid-cols-4'>
         {vegRes.slice(0, 4).map((res, index) => (
-          <RestaurantCard key={index} restaurant={res} />
+          <RestaurantCard key={index} restaurant={res} type = 'veg'/>
         ))}
       </div>
 
       <h2 className='text-red-900 font-bold text-4xl text-center mt-5 mb-10'>NONVEG RESTAURANT</h2>
       <div className='grid grid-cols-4'>
         {nonVegRes.slice(0, 4).map((res, index) => (
-          <RestaurantCard key={index} restaurant={res} />
+          <RestaurantCard key={index} restaurant={res}  type = 'nonveg'/>
         ))}
       </div>
 
       <h2 className='text-red-900 font-bold text-4xl text-center mt-5 mb-10'>SOUTH INDIAN RESTAURANT</h2>
       <div className='grid grid-cols-4'>
         {southRes.slice(0, 4).map((res, index) => (
-          <RestaurantCard key={index} restaurant={res} />
+          <RestaurantCard key={index} restaurant={res} type='south'/>
         ))}
       </div>
 
       {vegRes.length > 0 && (
         <h2 className='text-red-900 font-bold text-4xl text-center mt-5 mb-10'>
-          {vegRes[0].res_name}
+          {vegRes[1].res_name}
         </h2>
       )}
 

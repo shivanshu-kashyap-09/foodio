@@ -3,9 +3,11 @@ import React, { useState } from 'react';
 import { FaEnvelope, FaLock, FaEyeSlash } from 'react-icons/fa';
 import { Navigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-  const [user, setUer] = useState([]);
+  const navigate = useNavigate();
+  const [user, setUser] = useState([]);
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
 
@@ -14,20 +16,27 @@ const Login = () => {
       const response = await axios.post(`${import.meta.env.VITE_URL}/user/login`, {
         userName,
         password
-      })
-      console.log(response);
-      
-      if (response.status == 200) {
+      });
+
+      if (response.status === 200) {
+        const userData = response.data;
+        if (!userData || !userData.user_id) {
+          toast.error("Login failed: Invalid user data.");
+          return;
+        }
+        localStorage.setItem("user_id", userData.user_id);
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
+
         toast.success("Login Successfully");
-        setUer(response.body);
-        localStorage.setItem("user", JSON.stringify(user));
-        Navigate('/');
+        navigate('/');
       }
     } catch (error) {
-      toast.error("user name or password is wrong.")
+      toast.error("Username or password is wrong.");
       console.error(error);
     }
-  }
+  };
+
   return (
     <div className="w-full min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-6">

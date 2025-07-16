@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import logo from "../assets/logo.png";
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const USER_ID = localStorage.getItem('user_id');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,6 +21,18 @@ const Header = () => {
     const userData = JSON.parse(localStorage.getItem("user"));
     setUser(userData);
   }, []);
+
+  useEffect(() => {
+    const handleProfile = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_URL}/user/get/${USER_ID}`);
+        if (res.status === 200) setUser(res.data);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    handleProfile();
+  },[]);
 
   return (
     <header className={`w-screen px-4 py-2 flex items-center justify-between shadow-md fixed top-0 left-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-red-200' : 'bg-transparent'}`}>
@@ -42,7 +56,13 @@ const Header = () => {
         ) : (
           <img
             onClick={() => navigate("/profile")}
-            src={user.profileImg}
+            src={
+                user.user_img
+                  ? user.user_img.startsWith('http')
+                    ? user.user_img
+                    : `${import.meta.env.VITE_URL}${user.user_img}`
+                  : "https://static.vecteezy.com/system/resources/previews/002/002/403/non_2x/man-with-beard-avatar-character-isolated-icon-free-vector.jpg"
+              }
             alt="profile"
             className="w-10 h-10 rounded-full cursor-pointer border-2 border-red-500"
           />
