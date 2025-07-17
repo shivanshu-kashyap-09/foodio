@@ -50,8 +50,8 @@ const Header = () => {
         <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} to="/contact">Contact</Link>
          {!user ? (
           <>
-            <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/login">Login</Link>
-            <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/signup">Signup</Link>
+            <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} to="/login">Login</Link>
+            <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} to="/signup">Signup</Link>
           </>
         ) : (
           <img
