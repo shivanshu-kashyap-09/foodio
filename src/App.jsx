@@ -1,5 +1,6 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import axios from 'axios';
 import Layout from "./Pages/Layout";
 import Home from "./Pages/Home";
 import Restaurant from "./Pages/Restaurant";
@@ -18,6 +19,11 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const App = () => {
+  useEffect(() => {
+    axios.get(`${import.meta.env.VITE_URL}/ping`)
+      .then(() => console.log("✅ Backend is awake"))
+      .catch(() => console.warn("⚠️ Could not wake backend"));
+  }, []);
   return (
     <Router>
       <Routes>
