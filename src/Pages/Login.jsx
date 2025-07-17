@@ -24,7 +24,7 @@ const Login = () => {
           toast.error("Login failed: Invalid user data.");
           return;
         }
-        localStorage.setItem("user_id", userData.user_id);
+        localStorage.setItem("user_id", userData.user_id || 0);
         localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
 
