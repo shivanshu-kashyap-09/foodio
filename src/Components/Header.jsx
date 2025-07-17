@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import logo from "../assets/logo.png";
-import { useNavigate } from 'react-router-dom';
+import {Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Header = () => {
@@ -42,16 +42,16 @@ const Header = () => {
       </div>
 
       <nav className="flex flex-wrap gap-3 justify-end mr-6">
-        <a className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/#home">Home</a>
-        <a className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/restaurant">Restaurant</a>
-        <a className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/cart">Cart</a>
-        <a className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/wishlist">Wishlist</a>
-        <a className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/choose">About Us</a>
-        <a className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/contact">Contact</a>
+        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/#home">Home</Link>
+        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/restaurant">Restaurant</Link>
+        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/cart">Cart</Link>
+        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/wishlist">Wishlist</Link>
+        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/choose">About Us</Link>
+        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/contact">Contact</Link>
          {!user ? (
           <>
-            <a className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/login">Login</a>
-            <a className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/signup">Signup</a>
+            <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/login">Login</Link>
+            <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/signup">Signup</Link>
           </>
         ) : (
           <img
