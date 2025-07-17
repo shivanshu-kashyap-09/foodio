@@ -42,12 +42,12 @@ const Header = () => {
       </div>
 
       <nav className="flex flex-wrap gap-3 justify-end mr-6">
-        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/#home">Home</Link>
-        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/restaurant">Restaurant</Link>
-        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/cart">Cart</Link>
-        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/wishlist">Wishlist</Link>
-        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/choose">About Us</Link>
-        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/contact">Contact</Link>
+        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} to="/">Home</Link>
+        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} to="/restaurant">Restaurant</Link>
+        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} to="/cart">Cart</Link>
+        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} to="/wishlist">Wishlist</Link>
+        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} to="/choose">About Us</Link>
+        <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} to="/contact">Contact</Link>
          {!user ? (
           <>
             <Link className={`font-semibold text-[18px] px-3 py-1 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'}`} href="/login">Login</Link>
