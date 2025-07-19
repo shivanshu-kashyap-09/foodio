@@ -1,11 +1,9 @@
 import axios from 'axios';
 import React from 'react'
-// import dish from "../assets/logo.png"
 import { FaHeart, FaRupeeSign, FaShoppingCart, FaStar } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 const DishCard = ({ dish_name, dish_image, dish_description, dish_price, dish_rating }) => {
-
   const USER_ID = localStorage.getItem('user_id');
 
   const handleWhishList = async () => {
@@ -41,32 +39,31 @@ const DishCard = ({ dish_name, dish_image, dish_description, dish_price, dish_ra
     } catch (error) {
       toast.error("dish is not add in cart!");
       console.error(error);
-
     }
   }
 
   return (
-    <div className="w-64 rounded-3xl bg-gradient-to-b from-red-200 to-red-100 shadow-xl p-4 relative text-center">
+    <div className="w-full max-w-xs sm:w-64 rounded-3xl bg-gradient-to-b from-red-200 to-red-100 shadow-xl p-4 relative text-center mx-auto">
       <div className="relative">
-        <img src={dish_image} alt={dish_name} className="rounded-full mx-auto w-40 h-40 object-cover shadow-md" />
-        <div className="absolute top-0 -right-3 bg-red-500 text-red-200 hover:bg-red-300 hover:text-red-600 rounded-full p-2"
+        <img src={dish_image} alt={dish_name} className="rounded-full mx-auto w-32 h-32 sm:w-40 sm:h-40 object-cover shadow-md" />
+        <div className="absolute top-0 -right-4 sm:-right-3  bg-red-500 text-red-200 hover:bg-red-300 hover:text-red-600 rounded-full p-2"
           onClick={handleCart}>
-          <FaShoppingCart className="text-sm h-6 w-6" />
+          <FaShoppingCart className="text-sm h-5 w-5 sm:h-6 sm:w-6" />
         </div>
-        <div className="absolute top-12 -right-3 bg-red-500 text-red-200 hover:bg-red-300 hover:text-red-600 rounded-full p-2"
+        <div className="absolute top-10 sm:top-12 -right-4 sm:-right-3 bg-red-500 text-red-200 hover:bg-red-300 hover:text-red-600 rounded-full p-2"
           onClick={handleWhishList}>
-          <FaHeart className="text-sm h-6 w-6" />
+          <FaHeart className="text-sm h-5 w-5 sm:h-6 sm:w-6" />
         </div>
-        <div className="absolute top-24 -right-3 bg-green-700 text-red-200 hover:bg-green-600 hover:text-red-600 rounded-full p-2">
-          <FaStar className="text-sm h-6 w-6" />
+        <div className="absolute top-20 sm:top-24 -right-4 sm:-right-3 bg-green-700 text-red-200 hover:bg-green-600 hover:text-red-600 rounded-full p-2">
+          <FaStar className="text-sm h-5 w-5 sm:h-6 sm:w-6" />
         </div>
-        <p className='absolute top-34 right-0 text-green-700 font-semibold'>{dish_rating}</p>
+        <p className='absolute top-28 sm:top-34 right-0 text-green-700 font-semibold text-sm sm:text-base'>{dish_rating}</p>
       </div>
       <div className="mt-4">
-        <h3 className="text-lg font-bold text-red-900">{dish_name}</h3>
-        <p className="text-sm text-red-800">{dish_description}</p>
-        <div className="mt-2 flex items-center justify-center text-md font-semibold text-red-900">
-          <FaRupeeSign className="mr-1 text-sm" />
+        <h3 className="text-base sm:text-lg font-bold text-red-900">{dish_name}</h3>
+        <p className="text-xs sm:text-sm text-red-800">{dish_description}</p>
+        <div className="mt-2 flex items-center justify-center text-sm sm:text-md font-semibold text-red-900">
+          <FaRupeeSign className="mr-1 text-xs sm:text-sm" />
           {dish_price}
         </div>
       </div>

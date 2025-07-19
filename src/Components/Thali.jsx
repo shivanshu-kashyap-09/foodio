@@ -4,8 +4,6 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { useNavigate } from 'react-router-dom';
 
-// import logo from "../assets/logo.png"
-
 const Thali = ({thalis}) => {
   const navigate = useNavigate();
 
@@ -36,26 +34,28 @@ const Thali = ({thalis}) => {
   };
 
   const handleThali = (thaliId) => {
-  navigate(`/thali/description/${thaliId}`);
-};
+    navigate(`/thali/description/${thaliId}`);
+  };
 
   return (
-    <div className="w-full py-12 bg-white">
-      <div className="max-w-7xl mx-auto px-6">
-        <h2 className="text-3xl font-bold mb-6 text-center text-red-900 ">Indian Veg Thalis</h2>
+    <div className="w-full py-8 sm:py-10 md:py-12 bg-white">
+      <div className="max-w-full sm:max-w-4xl md:max-w-5xl lg:max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-center text-red-900">Indian Veg Thalis</h2>
         <Slider {...settings}>
           {thalis.map((thali, index) => (
-            <div key={index} className="px-2">
-              <div className="bg-white rounded-xl text-center h-92 shadow-md overflow-hidden"
-              onClick={() => handleThali(thali.thali_id)}>
+            <div key={index} className="px-1 sm:px-2">
+              <div 
+                className="bg-white rounded-xl text-center h-80 sm:h-92 shadow-md overflow-hidden mx-auto max-w-xs sm:max-w-sm"
+                onClick={() => handleThali(thali.thali_id)}
+              >
                 <img
                   src={thali.thali_img}
                   alt={thali.thali_name}
-                  className="h-73 w-72 rounded-full mt-1 text-center"
+                  className="h-56 sm:h-64 md:h-72 w-56 sm:w-64 md:w-72 rounded-full mt-1 mx-auto"
                 />
-                <div className="p-4">
-                  <h3 className="text-lg text-red-900 font-bold">{thali.thali_name}</h3>
-                  <p className="text-red-600 font-bold">{thali.price}</p>
+                <div className="p-3 sm:p-4">
+                  <h3 className="text-base sm:text-lg text-red-900 font-bold">{thali.thali_name}</h3>
+                  <p className="text-sm sm:text-base text-red-600 font-bold">{thali.price}</p>
                 </div>
               </div>
             </div>

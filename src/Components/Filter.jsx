@@ -7,7 +7,7 @@ const Filter = () => {
   const [delivery, setDelivery] = useState('');
 
   return (
-    <div className='border border-red-600 h-75 w-100 z-10 absolute right-0 top-0 bg-gradient-to-b from-red-200 to-red-100 shadow-xl rounded-3xl'>
+    <div className='border border-red-600 h-75 w-100 z-10 absolute right-10 -top-5 bg-gradient-to-b from-red-200 to-red-100 shadow-xl rounded-3xl'>
 
       <h2 className='text-red-900 text-center font-bold text-3xl mt-4 mb-4'>FOOD FILTER</h2>
 

@@ -22,14 +22,13 @@ const Hero = () => {
         />
       </video>
 
-      <div className="relative text-center bg-opacity-50 p-8 rounded-lg">
-        <h2 className="text-5xl font-bold text-white mb-6">
+      <div className="relative text-center bg-opacity-50 p-4 sm:p-6 md:p-8 rounded-lg max-w-[90%] sm:max-w-[80%] md:max-w-3xl lg:max-w-4xl">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
           Your city's flavors, <br /> now just a click away.
         </h2>
 
-        <div className="z-50 bg-white mx-auto flex w-fit max-w-screen-lg items-center justify-center gap-8 rounded-2xl border px-4 py-3 shadow-md mt-10 lg:rounded-[32px] lg:px-7 lg:py-6 2xl:gap-12 2xl:mt-14">
-          {/* Restaurants */}
-          <div className="flex items-center">
+        <div className="z-50 bg-white mx-auto flex flex-row sm:flex-row w-fit max-w-screen-lg items-center justify-center gap-4 sm:gap-8 rounded-2xl border px-4 py-3 shadow-md mt-6 sm:mt-8 md:mt-10 lg:rounded-[32px] lg:px-7 lg:py-6 2xl:gap-12 2xl:mt-14">
+          <div className="sm:flex sm:items-center">
             <div>
               <div className="text-2xl font-bold text-gray-800 lg:text-3xl 2xl:text-4xl">
                 300+
@@ -43,10 +42,9 @@ const Hero = () => {
             />
           </div>
 
-          <div className="h-9 lg:h-12 xl:h-16 w-px border-l border-gray-300"></div>
+          <div className="hidden sm:block h-9 lg:h-12 xl:h-16 w-px border-l border-gray-300"></div>
 
-          {/* Cities */}
-          <div className="flex items-center">
+          <div className="sm:flex sm:items-center">
             <div>
               <div className="text-2xl font-bold text-gray-800 lg:text-3xl 2xl:text-4xl">
                 100+
@@ -60,10 +58,9 @@ const Hero = () => {
             />
           </div>
 
-          <div className="h-9 lg:h-12 xl:h-16 w-px border-l border-gray-300"></div>
+          <div className="hidden sm:block h-9 lg:h-12 xl:h-16 w-px border-l border-gray-300"></div>
 
-          {/* Orders */}
-          <div className="flex items-center">
+          <div className="sm:flex sm:items-center">
             <div>
               <div className="text-2xl font-bold text-gray-800 lg:text-3xl 2xl:text-4xl">
                 5000+

@@ -257,7 +257,7 @@ const Home = () => {
 
   const handleVeg = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/vegmenu/id/2`);
+      const response = await axios.get(`${import.meta.env.VITE_URL}/vegmenu/restaurant/2`);
       if (response.status == 200) {
         setVegDish(response.data);
       }
@@ -270,7 +270,7 @@ const Home = () => {
   const handleNonVeg = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_URL}/nonvegmenu/id/1`);
-      if(response.status == 200){
+      if (response.status == 200) {
         setNonVegDish(response.data);
       }
     } catch (error) {
@@ -281,7 +281,7 @@ const Home = () => {
   const handleSouth = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_URL}/southindianmenu/id/1`);
-      if(response.status == 200){
+      if (response.status == 200) {
         setSouthDish(response.data);
       }
     } catch (error) {
@@ -301,7 +301,7 @@ const Home = () => {
   return (
     <>
       <Hero />
-      <div className="h-auto grid grid-cols-3 mt-4 ml-20 gap-4">
+      <div className="h-auto grid grid-cols-1 lg:grid-cols-3 mt-4 mx-4 sm:mx-8 lg:ml-20 gap-4">
         {restaurantData.map((restaurant, index) => (
           <HeroRestaurant
             key={index}
@@ -315,7 +315,7 @@ const Home = () => {
       <Thali thalis={thalis} />
       <Veg vegDish={vegDish} />
       <Banner />
-      <NonVeg nonVegDish={nonVegDish}/>
+      <NonVeg nonVegDish={nonVegDish} />
       <Banner />
       <SouthIndian southDish={southDish}/>
       <Choose />
