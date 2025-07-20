@@ -1,29 +1,30 @@
 import axios from 'axios';
 import React, { useState } from 'react';
 import { FaEnvelope, FaLock, FaEyeSlash } from 'react-icons/fa';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState([]);
-  const [userName, setUserName] = useState('');
+  const [userValue, setUserValue] = useState('');
   const [password, setPassword] = useState('');
 
   const handleUser = async () => {
     try {
       const response = await axios.post(`${import.meta.env.VITE_URL}/user/login`, {
-        userName,
-        password
+        user: userValue,
+        password: password,
       });
 
+      const userData = response.data;
       if (response.status === 200) {
-        const userData = response.data;
         if (!userData || !userData.user_id) {
           toast.error("Login failed: Invalid user data.");
           return;
         }
+
         localStorage.setItem("user_id", userData.user_id || 0);
         localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
@@ -32,10 +33,22 @@ const Login = () => {
         navigate('/');
       }
     } catch (error) {
-      toast.error("Username or password is wrong.");
+      if (error.response) {
+        const { status } = error.response;
+        if (status === 403) {
+          toast.error("User is not verified.");
+        } else if (status === 401) {
+          toast.error("Invalid credentials.");
+        } else {
+          toast.error("Server error occurred.");
+        }
+      } else {
+        toast.error("Network error. Please try again.");
+      }
       console.error(error);
     }
   };
+
 
   return (
     <div className="w-full min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -65,8 +78,8 @@ const Login = () => {
               className="bg-transparent outline-none w-full"
               name="email"
               placeholder="Enter email / phone number"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
+              value={userValue}
+              onChange={(e) => setUserValue(e.target.value)}
               autoComplete="off"
             />
           </div>
@@ -116,14 +129,14 @@ const Login = () => {
 
           {/* Links */}
           <div className="text-sm text-center space-y-1">
-            <a href="/forget-password" className="text-blue-500 hover:underline">
+            <Link to="/forget-password" className="text-blue-500 hover:underline">
               Forgot Password?
-            </a>
+            </Link>
             <p>
               Don't have an account?{' '}
-              <a href="/signup" className="text-blue-500 hover:underline">
+              <Link to="/signup" className="text-blue-500 hover:underline">
                 Sign up
-              </a>
+              </Link>
             </p>
           </div>
         </form>

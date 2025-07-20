@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FaEnvelope, FaLock, FaEyeSlash, FaPhone } from 'react-icons/fa';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Signup = () => {
   const [form, setForm] = useState({
@@ -127,7 +127,7 @@ const Signup = () => {
 
         <div className="text-sm text-center mt-4">
           Already have an account?{" "}
-          <a href="/login" className="text-blue-500 hover:underline">Log In</a>
+          <Link to="/login" className="text-blue-500 hover:underline">Log In</Link>
         </div>
       </div>
     </div>

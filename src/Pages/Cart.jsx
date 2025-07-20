@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaMinus, FaPlus, FaTrash } from 'react-icons/fa';
-import { FaEdit } from 'react-icons/fa';
+import { FaMinus, FaPlus, FaTrash, FaEdit } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
@@ -138,32 +137,32 @@ const Cart = () => {
   }, []);
 
   return (
-    <div className="bg-gray-100 min-h-screen mt-14">
-      <div className="max-w-5xl mx-auto bg-white shadow-md rounded-lg p-6">
-        {/* Account Section */}
+    <div className="bg-gray-100 min-h-screen pt-16 pb-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-full sm:max-w-4xl lg:max-w-5xl mx-auto bg-white shadow-md rounded-lg p-4 sm:p-6">
+
         <div className="mb-6">
-          <h2 className="text-5xl font-bold mb-4 text-center text-red-900">Account</h2>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-center text-red-900">Account</h2>
           {!user ? (
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
               <img
                 src="https://static.vecteezy.com/system/resources/previews/002/002/403/non_2x/man-with-beard-avatar-character-isolated-icon-free-vector.jpg"
                 alt="Login"
-                className="w-32 h-32 object-contain"
+                className="w-24 h-24 sm:w-32 sm:h-32 object-contain"
               />
-              <div>
-                <p className="text-gray-700 mb-2">
+              <div className="text-center sm:text-left">
+                <p className="text-gray-700 mb-4 text-sm sm:text-base">
                   To place your order now, log in to your existing account or sign up.
                 </p>
-                <div className="flex gap-4">
+                <div className="flex gap-4 justify-center sm:justify-start">
                   <button
                     onClick={() => window.location.href = "/login"}
-                    className="bg-red-500 text-white px-4 py-2 rounded-md"
+                    className="bg-red-500 text-white px-4 py-2 rounded-md text-sm sm:text-base hover:bg-red-600"
                   >
                     LOG IN
                   </button>
                   <button
                     onClick={() => window.location.href = "/signup"}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                    className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm sm:text-base hover:bg-blue-600"
                   >
                     SIGN UP
                   </button>
@@ -171,27 +170,27 @@ const Cart = () => {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-6">
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
               <img
                 src={
-                user.user_img
-                  ? user.user_img.startsWith('http')
-                    ? user.user_img
-                    : `${import.meta.env.VITE_URL}${user.user_img}`
-                  : "https://static.vecteezy.com/system/resources/previews/002/002/403/non_2x/man-with-beard-avatar-character-isolated-icon-free-vector.jpg"
-              }
+                  user.user_img
+                    ? user.user_img.startsWith('http')
+                      ? user.user_img
+                      : `${import.meta.env.VITE_URL}${user.user_img}`
+                    : "https://static.vecteezy.com/system/resources/previews/002/002/403/non_2x/man-with-beard-avatar-character-isolated-icon-free-vector.jpg"
+                }
                 alt="User"
-                className="w-40 h-40 rounded-full object-cover border"
+                className="w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40 rounded-full object-cover border"
               />
-              <div className="flex flex-col gap-1 text-lg">
-                <h3 className="text-2xl font-semibold text-red-700">{user.user_name}</h3>
+              <div className="flex flex-col gap-2 text-base sm:text-lg w-full">
+                <h3 className="text-xl sm:text-2xl font-semibold text-red-700 text-center sm:text-left">{user.user_name}</h3>
                 <p className="text-gray-700">📞 {user.user_phone}</p>
                 <p className="text-gray-700">📧 {user.user_gmail}</p>
                 <div className="relative">
-                  <h4 className="text-lg font-semibold mt-4">Address</h4>
+                  <h4 className="text-base sm:text-lg font-semibold mt-4">Address</h4>
                   <button
                     onClick={() => setEditAddress(!editAddress)}
-                    className="absolute top-0 right-0 text-red-600 hover:text-red-800"
+                    className="absolute top-0 right-0 text-red-600 hover:text-red-800 text-lg sm:text-xl"
                   >
                     <FaEdit />
                   </button>
@@ -201,18 +200,18 @@ const Cart = () => {
                         rows={3}
                         value={user.user_address || ''}
                         onChange={(e) => setUser({ ...user, user_address: e.target.value })}
-                        className="w-full border rounded px-3 py-2 mt-2"
+                        className="w-full border rounded px-3 py-2 mt-2 text-sm sm:text-base"
                         placeholder="Enter your address"
                       />
                       <button
-                        className="mt-2 px-4 py-1 bg-green-600 text-white rounded-md"
+                        className="mt-2 px-4 py-1 bg-green-600 text-white rounded-md text-sm sm:text-base hover:bg-green-700"
                         onClick={handleSaveAddress}
                       >
                         Save Address
                       </button>
                     </>
                   ) : (
-                    <p className="text-gray-600 mt-2">{user.user_address || "No address added."}</p>
+                    <p className="text-gray-600 mt-2 text-sm sm:text-base">{user.user_address || "No address added."}</p>
                   )}
                 </div>
               </div>
@@ -220,16 +219,15 @@ const Cart = () => {
           )}
         </div>
 
-        {/* Payment Section */}
         <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Payment</h2>
-          <p className="text-gray-600 mb-4">Choose your payment method during checkout.</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-2">Payment</h2>
+          <p className="text-gray-600 mb-4 text-sm sm:text-base">Choose your payment method during checkout.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
             {['UPI', 'Cash', 'NetBanking', 'Card'].map(method => (
               <div
                 key={method}
                 onClick={() => handleSelect(method)}
-                className={`border ${selected === method ? 'border-red-500' : 'border-red-50'} rounded-lg shadow p-4 text-center hover:shadow-md cursor-pointer`}
+                className={`border ${selected === method ? 'border-red-500' : 'border-red-50'} rounded-lg shadow p-3 sm:p-4 text-center hover:shadow-md cursor-pointer`}
               >
                 <img
                   src={{
@@ -239,27 +237,27 @@ const Cart = () => {
                     Card: 'https://img.icons8.com/fluency/48/bank-cards.png'
                   }[method]}
                   alt={method}
-                  className="mx-auto mb-2 w-10 h-10"
+                  className="mx-auto mb-2 w-8 h-8 sm:w-10 sm:h-10"
                 />
-                <p className="text-sm font-medium">{method}</p>
+                <p className="text-xs sm:text-sm font-medium">{method}</p>
               </div>
             ))}
           </div>
 
           {selected === 'UPI' && (
-            <input type="text" placeholder="example@upi" className="w-full border px-4 py-2 rounded mb-4" />
+            <input type="text" placeholder="example@upi" className="w-full border px-4 py-2 rounded text-sm sm:text-base mb-4" />
           )}
           {selected === 'Card' && (
             <div className="space-y-4 mb-4">
-              <input type="text" placeholder="xxxx-xxxx-xxxx-xxxx" className="w-full border px-4 py-2 rounded" />
-              <div className="flex gap-4">
-                <input type="text" placeholder="MM/YY" className="w-1/2 border px-4 py-2 rounded" />
-                <input type="password" placeholder="CVV" className="w-1/2 border px-4 py-2 rounded" />
+              <input type="text" placeholder="xxxx-xxxx-xxxx-xxxx" className="w-full border px-4 py-2 rounded text-sm sm:text-base" />
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <input type="text" placeholder="MM/YY" className="w-full sm:w-1/2 border px-4 py-2 rounded text-sm sm:text-base" />
+                <input type="password" placeholder="CVV" className="w-full sm:w-1/2 border px-4 py-2 rounded text-sm sm:text-base" />
               </div>
             </div>
           )}
           {selected === 'NetBanking' && (
-            <select className="w-full border px-4 py-2 rounded mb-4">
+            <select className="w-full border px-4 py-2 rounded text-sm sm:text-base mb-4">
               <option value="">-- Select Bank --</option>
               <option>SBI</option>
               <option>HDFC</option>
@@ -268,57 +266,55 @@ const Cart = () => {
             </select>
           )}
           {selected === 'Cash' && (
-            <div className="text-green-600 text-sm font-medium mb-4">
+            <div className="text-green-600 text-xs sm:text-sm font-medium mb-4">
               You'll pay with cash when the order is delivered.
             </div>
           )}
         </div>
 
-        {/* Cart Items */}
         {cartItems.length === 0 ? (
           <div className="flex justify-center">
             <div className="grid grid-rows-1">
-              <h2 className="text-5xl font-bold mb-2 text-center text-red-900">Cart</h2>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-center text-red-900">Cart</h2>
               <img
                 src="https://cdn-icons-png.flaticon.com/512/13637/13637462.png"
                 alt="empty cart"
-                className="w-50 h-50"
+                className="w-40 h-40 sm:w-50 sm:h-50 mx-auto"
               />
             </div>
           </div>
         ) : (
           <>
-            <div className="border-t pt-6 mt-6">
-              <div className="grid grid-cols-7 gap-3 bg-red-400 text-red-900 font-bold px-4 py-3">
-                <h2>S.NO.</h2>
-                <h2>IMAGE</h2>
-                <h2>DISH NAME</h2>
-                <h2 className='ml-9'>QTY</h2>
-                <h2>PRICE</h2>
-                <h2>TOTAL</h2>
-                <h2>ACTION</h2>
+            <div className="border-t pt-4 sm:pt-6 mt-4 sm:mt-6">
+              <div className="grid grid-cols-5 sm:grid-cols-7 gap-2 sm:gap-3 bg-red-400 text-red-900 font-bold px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">
+                <h2 className="text-center">S.NO.</h2>
+                <h2 className="hidden sm:block text-center">IMAGE</h2>
+                <h2 className="text-center">DISH NAME</h2>
+                <h2 className="text-center">QTY</h2>
+                <h2 className="text-center">PRICE</h2>
+                <h2 className="hidden sm:block text-center">TOTAL</h2>
+                <h2 className="text-center">ACTION</h2>
               </div>
               {cartItems.map((item, index) => (
-                <div key={item.id} className="grid grid-cols-7 gap-3 items-center px-4 py-3 border-b">
-                  <p className='text-center font-bold text-2xl text-red-700'>{index + 1}.</p>
-                  <img src={item.dish_img} alt={item.dish_name} className="w-20 h-20 rounded object-cover" />
-                  <p className="text-gray-700">{item.dish_name}</p>
-                  <p className="text-center text-green-700 font-semibold text-xl">{item.dish_qty || 1}</p>
-                  <p className="text-green-700 font-semibold text-xl">₹{item.dish_price}</p>
-                  <p className="text-green-700 font-bold text-xl">₹{item.dish_price * (item.dish_qty || 1)}</p>
-                  <div className="flex items-center gap-2">
-                    <button className="bg-green-700 text-white px-2 py-1 rounded-md" onClick={() => increaseQuantity(item.dish_name, item.dish_qty)}><FaPlus /></button>
-                    <button className="bg-white text-red-600 px-2 py-1 rounded-md border" onClick={() => handleDeleteOneCart(item.dish_name)}><FaTrash /></button>
-                    <button className="bg-green-700 text-white px-2 py-1 rounded-md" onClick={() => decreaseQuantity(item.dish_name, item.dish_qty)}><FaMinus /></button>
+                <div key={item.id} className="grid grid-cols-5 sm:grid-cols-7 gap-2 sm:gap-3 items-center px-2 sm:px-4 py-2 sm:py-3 border-b text-xs sm:text-sm">
+                  <p className="text-center font-bold text-red-700">{index + 1}.</p>
+                  <img src={item.dish_img} alt={item.dish_name} className="hidden sm:block w-12 h-12 sm:w-16 sm:h-16 rounded object-cover mx-auto" />
+                  <p className="text-gray-700 truncate">{item.dish_name}</p>
+                  <p className="text-center text-green-700 font-semibold">{item.dish_qty || 1}</p>
+                  <p className="text-center text-green-700 font-semibold">₹{item.dish_price}</p>
+                  <p className="hidden sm:block text-center text-green-700 font-bold">₹{item.dish_price * (item.dish_qty || 1)}</p>
+                  <div className="flex items-center justify-center gap-1 sm:gap-2">
+                    <button className="bg-green-700 text-white p-1 sm:p-2 rounded-md text-xs sm:text-sm" onClick={() => increaseQuantity(item.dish_name, item.dish_qty)}><FaPlus /></button>
+                    <button className="bg-white text-red-600 p-1 sm:p-2 rounded-md border text-xs sm:text-sm" onClick={() => handleDeleteOneCart(item.dish_name)}><FaTrash /></button>
+                    <button className="bg-green-700 text-white p-1 sm:p-2 rounded-md text-xs sm:text-sm" onClick={() => decreaseQuantity(item.dish_name, item.dish_qty)}><FaMinus /></button>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Bill Summary */}
-            <div className="mt-3">
-              <h2 className="text-xl font-semibold mb-4">Bill Details</h2>
-              <div className="space-y-2 text-gray-700">
+            <div className="mt-4 sm:mt-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4">Bill Details</h2>
+              <div className="space-y-2 text-gray-700 text-sm sm:text-base">
                 <div className="flex justify-between"><span>Item Total</span><span>₹{itemTotal.toFixed(2)}</span></div>
                 <div className="flex justify-between"><span>Delivery Fee</span><span>₹{deliveryFee.toFixed(2)}</span></div>
                 <div className="flex justify-between"><span>GST</span><span>₹{gst.toFixed(2)}</span></div>
@@ -328,10 +324,9 @@ const Cart = () => {
           </>
         )}
 
-        {/* Place Order Button */}
-        <div className="flex justify-center mt-6">
+        <div className="flex justify-center mt-4 sm:mt-6">
           <button
-            className="bg-red-500 text-white px-6 py-2 rounded-md text-[20px] hover:bg-red-700"
+            className="bg-red-500 text-white px-4 sm:px-6 py-2 rounded-md text-base sm:text-lg hover:bg-red-700 disabled:bg-red-300"
             onClick={handleOrder}
             disabled={cartItems.length === 0 || !selected}
           >
@@ -339,10 +334,9 @@ const Cart = () => {
           </button>
         </div>
 
-        {/* Cancellation Note */}
-        <div className="mt-6 p-4 bg-yellow-100 rounded-md">
-          <h4 className="font-semibold text-yellow-800">Review your order and address details to avoid cancellations</h4>
-          <p className="text-yellow-700 text-sm mt-2">
+        <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-yellow-100 rounded-md">
+          <h4 className="font-semibold text-yellow-800 text-sm sm:text-base">Review your order and address details to avoid cancellations</h4>
+          <p className="text-yellow-700 text-xs sm:text-sm mt-2">
             <b>Note:</b> Please ensure your address and order details are correct. This order, if cancelled, is non-refundable.
           </p>
         </div>

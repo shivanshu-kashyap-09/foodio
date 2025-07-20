@@ -1,8 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FaTrash } from 'react-icons/fa';
 import { FaCartShopping } from 'react-icons/fa6';
 import axios from 'axios';
-import { useEffect } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -13,11 +12,9 @@ const WhishList = () => {
   const handleWhishList = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_URL}/whishlist/get/${USER_ID}`);
-      console.log(response.data);
       setCartItems(response.data);
     } catch (error) {
       console.error(error);
-
     }
   }
 
@@ -28,13 +25,11 @@ const WhishList = () => {
       });
       if (response.status == 200) {
         toast.success("dish remove successfully");
-        console.log("done");
         handleWhishList();
       }
     } catch (error) {
       toast.error("dish is not removed!");
       console.error(error);
-
     }
   }
 
@@ -54,7 +49,6 @@ const WhishList = () => {
     } catch (error) {
       toast.error("dish is not add in cart!");
       console.error(error);
-
     }
   }
 
@@ -63,47 +57,41 @@ const WhishList = () => {
   }, []);
 
   return (
-    <div className="py-8 px-4">
-      <h2 className='text-red-900 font-bold text-4xl mt-14 pt-5 text-center'>WHISHLIST</h2>
+    <div className="py-6 px-4 sm:px-6 lg:px-8 min-h-screen">
+      <h2 className="text-red-900 font-bold text-2xl sm:text-3xl lg:text-4xl mt-12 pt-4 text-center">WHISHLIST</h2>
       {cartItems.length == 0 ? (
-        <div className="flex justify-center">
+        <div className="flex justify-center mt-8">
           <img
             src="https://cdn-icons-png.flaticon.com/512/13637/13637462.png"
             alt="empty wishlist"
+            className="w-40 h-40 sm:w-48 sm:h-48 lg:w-56 lg:h-56 mx-auto"
           />
         </div>
       ) : (
-        <div className="mx-10 rounded-xl bg-red-200 mt-10">
-          <div className='grid grid-cols-5 gap-3 bg-red-400 text-red-900 font-bold px-4 py-3'>
-            <h2 className='ml-20'>S.NO.</h2>
-            <h2>IMAGE</h2>
-            <h2>DISH NAME</h2>
-            <h2 className='ml-10'>PRICE</h2>
-            <h2>ACTION</h2>
+        <div className="mx-auto max-w-full sm:max-w-4xl lg:max-w-5xl rounded-xl bg-red-200 mt-8">
+          <div className="grid grid-cols-5 sm:grid-cols-5 gap-2 sm:gap-3 bg-red-400 text-red-900 font-bold px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">
+            <h2 className="text-center">S.NO.</h2>
+            <h2 className="text-center ">IMAGE</h2>
+            <h2 className="text-center">DISH NAME</h2>
+            <h2 className="text-center">PRICE</h2>
+            <h2 className="text-center">ACTION</h2>
           </div>
-
-          {/* Items */}
           {cartItems.map((item, index) => (
-            <div key={item.id} className="grid grid-cols-5 gap-3 items-center border-b px-4 py-4 bg-white">
-              <p className='text-center w-10 ml-20 font-bold text-2xl text-red-700'>{index + 1}.</p>
+            <div key={item.id} className="grid grid-cols-5 sm:grid-cols-5 gap-2 sm:gap-3 items-center border-b px-2 sm:px-4 py-2 sm:py-3 bg-white text-xs sm:text-sm">
+              <p className="text-center font-bold text-red-700">{index + 1}.</p>
               <img
                 src={item.dish_img}
                 alt={item.dish_name}
-                className="w-20 h-20 rounded object-cover"
+                className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded object-cover mx-auto"
               />
-              <div>
-                {/* <h3 className="text-lg font-medium">{item.restaurant}</h3> */}
-                {/* <p className="text-gray-500">{item.location}</p> */}
-                <p className="mt-1 text-gray-800 font-semibold">{item.dish_name}</p>
-              </div>
-              <p className="text-green-700 font-semibold text-lg ml-10">₹{item.dish_price}</p>
-              <div className="flex gap-2">
-                <button className="text-green-600 border px-3 py-2 rounded-md">
-                  <FaCartShopping className='h-5 w-5' onClick={() => { handleCart(item.dish_img, item.dish_name, item.dish_price, item.dish_description) }} />
+              <p className="text-gray-800 font-semibold truncate">{item.dish_name}</p>
+              <p className="text-center text-green-700 font-semibold">₹{item.dish_price}</p>
+              <div className="flex justify-center gap-1 sm:gap-2">
+                <button className="text-green-600 border p-1 sm:p-2 rounded-md hover:bg-green-100">
+                  <FaCartShopping className="h-4 w-4 sm:h-5 sm:w-5" onClick={() => handleCart(item.dish_img, item.dish_name, item.dish_price, item.dish_description)} />
                 </button>
-                <button className="text-red-600 border px-3 py-2 rounded-md"
-                  onClick={() => handleDeleteWhishList(item.dish_name)}>
-                  <FaTrash className='h-5 w-5' />
+                <button className="text-red-600 border p-1 sm:p-2 rounded-md hover:bg-red-100" onClick={() => handleDeleteWhishList(item.dish_name)}>
+                  <FaTrash className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
               </div>
             </div>
