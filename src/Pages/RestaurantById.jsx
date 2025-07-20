@@ -1,5 +1,3 @@
-// RestaurantById.jsx (Fixed and working as per your exact flow)
-
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -17,7 +15,6 @@ const RestaurantById = () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_URL}/${type}menu/id/${res_id}`);
             if (response.status === 200) {
-                console.log(response);
                 setMenu(response.data);
             }
         } catch (error) {
@@ -27,7 +24,7 @@ const RestaurantById = () => {
 
     const handleDishesById = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_URL}/${type}menu/id/${res_id}`);
+            const response = await axios.get(`${import.meta.env.VITE_URL}/${type}menu/restaurant/${res_id}`);
             if (response.status === 200) {
                 setDishes(response.data);
             }
@@ -54,24 +51,21 @@ const RestaurantById = () => {
     }, [type, res_id]);
 
     return (
-        <div className='mt-24 mb-10 px-6'>
-            <h2 className='text-red-900 font-bold text-4xl text-center mt-5 mb-10'>{res_name}</h2>
-            {/* MENU SECTION */}
-            <div className="flex gap-6 mx-4 items-start">
-                <div className='w-1/4 border-3 border-red-700 p-4 bg-white rounded-xl shadow-md'>
-                    <h2 className='text-red-900 font-bold text-4xl text-center border-b-3 bg-red-50 '>MENU</h2>
+        <div className="mt-16 sm:mt-20 md:mt-24 mb-6 sm:mb-8 lg:mb-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <h2 className="text-red-900 font-bold text-2xl sm:text-3xl md:text-4xl text-center mt-4 sm:mt-5 mb-6 sm:mb-8 md:mb-10">{res_name}</h2>
+            <div className="flex flex-col md:flex-row gap-4 sm:gap-6 mx-0 sm:mx-4">
+                <div className="w-full md:w-1/4 border-2 border-red-700 p-3 sm:p-4 bg-white rounded-xl shadow-md">
+                    <h2 className="hidden sm:block text-red-900 font-bold text-xl sm:text-2xl md:text-3xl text-center border-b-2 bg-red-50 py-2">MENU</h2>
                     <Menu menu={menu} />
                 </div>
-                <div className="w-3/4 grid grid-cols-3 gap-4">
+                <div className="w-full md:w-3/4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {dishes.slice(0, 9).map((dish, index) => (
                         <DishCard key={index} {...dish} />
                     ))}
                 </div>
             </div>
-
-            {/* ALL RESTAURANTS OF SAME TYPE */}
-            <h2 className='text-red-900 font-bold text-4xl text-center mt-12 mb-6'>Similar Restaurants</h2>
-            <div className='grid grid-cols-4 gap-4'>
+            <h2 className="text-red-900 font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl text-center mt-8 sm:mt-10 md:mt-12 mb-4 sm:mb-6">Similar Restaurants</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {allRestaurants.map((restaurant, index) => (
                     <RestaurantCard
                         key={index}
