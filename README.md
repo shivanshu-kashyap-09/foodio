@@ -31,7 +31,7 @@ npm run preview
 Create a `.env` file at the project root (next to `package.json`) to configure the API base URL used by the frontend. Example:
 
 ```
-VITE_URL=http://localhost:5173
+VITE_URL=http://localhost:3000
 ```
 
 ## Features
