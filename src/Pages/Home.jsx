@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import Hero from "../Components/Hero";
 import Veg from "../Components/Veg";
 import NonVeg from "../Components/NonVeg";
@@ -298,29 +299,137 @@ const Home = () => {
     handleNonVeg();
     handleSouth();
   }, []);
+  // Framer Motion variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.3
+      }
+    }
+  };
+
+  const sectionVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        damping: 15,
+        stiffness: 100
+      }
+    }
+  };
+
+  const gridVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        type: "spring",
+        damping: 12,
+        stiffness: 100
+      }
+    }
+  };
+
   return (
-    <>
-      <Hero />
-      <div className="h-auto grid grid-cols-1 lg:grid-cols-3 mt-4 mx-4 sm:mx-8 lg:ml-20 gap-4">
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <motion.div variants={sectionVariants}>
+        <Hero />
+      </motion.div>
+
+      <motion.div 
+        className="h-auto grid grid-cols-1 lg:grid-cols-3 mt-4 mx-4 sm:mx-8 lg:ml-20 gap-4"
+        variants={gridVariants}
+      >
         {restaurantData.map((restaurant, index) => (
-          <HeroRestaurant
+          <motion.div
             key={index}
-            restaurantName={restaurant.restaurantName}
-            dishes={restaurant.dishes}
-            link={restaurant.link}
-          />
+            variants={cardVariants}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <HeroRestaurant
+              restaurantName={restaurant.restaurantName}
+              dishes={restaurant.dishes}
+              link={restaurant.link}
+            />
+          </motion.div>
         ))}
-      </div>
-      <Banner />
-      <Thali thalis={thalis} />
-      <Veg vegDish={vegDish} />
-      <Banner />
-      <NonVeg nonVegDish={nonVegDish} />
-      <Banner />
-      <SouthIndian southDish={southDish}/>
-      <Choose />
-      <Contact />
-    </>
+      </motion.div>
+
+      <motion.div variants={sectionVariants}>
+        <Banner />
+      </motion.div>
+
+      <motion.div 
+        variants={sectionVariants}
+        viewport={{ once: true }}
+      >
+        <Thali thalis={thalis} />
+      </motion.div>
+
+      <motion.div 
+        variants={sectionVariants}
+        viewport={{ once: true }}
+      >
+        <Veg vegDish={vegDish} />
+      </motion.div>
+
+      <motion.div variants={sectionVariants}>
+        <Banner />
+      </motion.div>
+
+      <motion.div 
+        variants={sectionVariants}
+        viewport={{ once: true }}
+      >
+        <NonVeg nonVegDish={nonVegDish} />
+      </motion.div>
+
+      <motion.div variants={sectionVariants}>
+        <Banner />
+      </motion.div>
+
+      <motion.div 
+        variants={sectionVariants}
+        viewport={{ once: true }}
+      >
+        <SouthIndian southDish={southDish}/>
+      </motion.div>
+
+      <motion.div 
+        variants={sectionVariants}
+        viewport={{ once: true }}
+      >
+        <Choose />
+      </motion.div>
+
+      <motion.div 
+        variants={sectionVariants}
+        viewport={{ once: true }}
+      >
+        <Contact />
+      </motion.div>
+    </motion.div>
   );
 };
 
