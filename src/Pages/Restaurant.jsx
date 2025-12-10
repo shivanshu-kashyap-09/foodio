@@ -127,7 +127,7 @@ const Restaurant = () => {
 
       {vegRes.length > 0 && (
         <h2 className='text-red-900 font-bold text-2xl sm:text-3xl lg:text-4xl text-center mt-8 mb-8'>
-          {vegRes[2].res_name}
+          {vegRes[0].res_name}
         </h2>
       )}
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 mx-auto max-w-7xl items-start">
@@ -136,7 +136,7 @@ const Restaurant = () => {
           <Menu menu={vegMenu} />
         </div>
         <div className="w-full lg:w-3/4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {vegMenu.slice(0, 9).map((dish, index) => (
+          {vegMenu.map((dish, index) => (
             <DishCard key={index} {...dish} />
           ))}
         </div>
@@ -151,7 +151,7 @@ const Restaurant = () => {
           <Menu menu={nonVegMenu} />
         </div>
         <div className="w-full lg:w-3/4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {nonVegMenu.slice(0, 9).map((dish, index) => (
+          {nonVegMenu.map((dish, index) => (
             <DishCard key={index} {...dish} />
           ))}
         </div>
@@ -166,7 +166,7 @@ const Restaurant = () => {
           <Menu menu={southMenu} />
         </div>
         <div className="w-full lg:w-3/4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {southMenu.slice(0, 9).map((dish, index) => (
+          {southMenu.map((dish, index) => (
             <DishCard key={index} {...dish} />
           ))}
         </div>

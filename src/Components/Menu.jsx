@@ -1,39 +1,72 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
 
 const Menu = ({ menu }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setIsOpen(false);
+  const containerRef = useRef(null);
+  const isInView = useInView(containerRef, { once: false, amount: 0.2 });
+  
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
       }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+    }
+  };
+
+  const itemVariants = {
+    hidden: { 
+      opacity: 0, 
+      y: 50 
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 20
+      }
+    }
+  };
 
   return (
-    <div className="relative" ref={menuRef}>
-      <button
-        className="lg:hidden w-full bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-lg focus:outline-none"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {isOpen ? 'Menu' : 'Menu'}
-      </button>
-
-      <div className={`space-y-2 mt-2 lg:mt-0 ${isOpen ? 'block' : 'hidden lg:block'}`}>
+    <motion.div 
+      ref={containerRef}
+      className="relative py-4"
+      variants={containerVariants}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+    >
+      <div className="space-y-4">
         {menu.map((dish, index) => (
-          <div key={index} className="border-b-2 border-red-700 grid grid-cols-2 gap-2 py-2">
-            <h2 className="ml-2 sm:ml-5 text-base sm:text-lg lg:text-xl font-bold text-red-700">{dish.dish_name}</h2>
-            <h2 className="ml-20 sm:ml-10 lg:ml-20 text-base sm:text-lg lg:text-xl font-semibold text-red-600">{dish.dish_price}</h2>
-          </div>
+          <motion.div
+            key={index}
+            variants={itemVariants}
+            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 p-4 border-l-4 border-red-500"
+          >
+            <div className="grid grid-cols-2 gap-4 items-center">
+              <motion.h2 
+                className="text-base sm:text-lg lg:text-xl font-bold text-gray-800"
+                whileHover={{ x: 10 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                {dish.dish_name}
+              </motion.h2>
+              <motion.h2 
+                className="text-base sm:text-lg lg:text-xl font-semibold text-red-600 text-right"
+                whileHover={{ scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                ₹{dish.dish_price}
+              </motion.h2>
+            </div>
+          </motion.div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
