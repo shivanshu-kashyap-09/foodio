@@ -137,7 +137,7 @@ const Cart = () => {
   }, []);
 
   return (
-    <div className="bg-gray-100 min-h-screen pt-16 pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-gray-100 min-h-screen mt-20 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-full sm:max-w-4xl lg:max-w-5xl mx-auto bg-white shadow-md rounded-lg p-4 sm:p-6">
 
         <div className="mb-6">

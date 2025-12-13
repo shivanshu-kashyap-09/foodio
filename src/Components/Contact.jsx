@@ -1,8 +1,26 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
 
 const Contact = () => {
+  const [name, setname] = useState("");
+  const [email, setemail] = useState("");
+  const [message, setmessage] = useState("");
+
+  const handleSubmit = async ()  => {
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_URL}/contact`, {name, email, message});
+      if (response.status === 201) {
+        toast.success("Message sent successfully!");
+        setname("");
+        setemail("");
+        setmessage("");
+      }
+    } catch (error) {
+      
+    }
+  }
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -40,7 +58,7 @@ const Contact = () => {
   };
   return (
     <motion.div 
-      className="min-h-screen bg-gradient-to-br from-[#fdf6f1] to-[#eae6f7] px-4 sm:px-6 md:px-8 py-8 sm:py-10 flex flex-col md:flex-row justify-between items-start relative"
+      className="min-h-screen bg-gradient-to-br from-[#fdf6f1] to-[#eae6f7] px-4 sm:px-6 md:px-8 py-8 sm:py-10 flex flex-col md:flex-row justify-between items-start relative mt-18"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true }}
@@ -166,6 +184,7 @@ const Contact = () => {
             className="w-full border border-gray-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm sm:text-base"
             whileFocus={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            setName={(e) => {e.target.value}}
           />
           <motion.input
             type="email"
@@ -174,6 +193,7 @@ const Contact = () => {
             className="w-full border border-gray-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm sm:text-base"
             whileFocus={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            setEmail={(e) => {e.target.value}}
           />
           <motion.textarea
             placeholder="Enter Message"
@@ -182,12 +202,14 @@ const Contact = () => {
             className="w-full border border-gray-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm sm:text-base"
             whileFocus={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            setMessage={(e) => {e.target.value}}
           />
           <motion.button
             type="button"
             className="bg-orange-600 text-white font-semibold px-4 sm:px-6 py-2 sm:py-2.5 rounded-md hover:bg-orange-700 transition text-sm sm:text-base"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={handleSubmit}
           >
             Submit
           </motion.button>

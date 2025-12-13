@@ -18,20 +18,19 @@ const Login = () => {
         password: password,
       });
 
-      const userData = response.data;
+      const { result, token } = response.data;
       if (response.status === 200) {
-        if (!userData || !userData.user_id) {
-          toast.error("Login failed: Invalid user data.");
-          return;
-        }
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("token", token); 
+        localStorage.setItem("user_id", result.user_id);
+        localStorage.setItem("user", JSON.stringify(result));
 
-        localStorage.setItem("user_id", userData.user_id || 0);
-        localStorage.setItem("user", JSON.stringify(userData));
-        setUser(userData);
+        setUser(result);
 
         toast.success("Login Successfully");
         navigate('/');
       }
+
     } catch (error) {
       if (error.response) {
         const { status } = error.response;
