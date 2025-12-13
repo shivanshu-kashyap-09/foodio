@@ -139,7 +139,7 @@ const Header = () => {
             { to: "/restaurant", label: "Restaurant" },
             { to: "/cart", label: "Cart" },
             { to: "/wishlist", label: "Wishlist" },
-            { to: "/choose", label: "About Us" },
+            { to: "/choose", label: "Choose us" },
             { to: "/contact", label: "Contact" }
           ].map((item, i) => (
             <motion.div

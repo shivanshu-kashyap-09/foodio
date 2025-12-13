@@ -103,7 +103,7 @@ const Restaurant = () => {
   }, [southRes]);
 
   return (
-    <div className='mt-16 mb-4 px-4 sm:px-6 lg:px-8'>
+    <div className='mt-20 mb-4 px-4 sm:px-6 lg:px-8'>
       <h2 className='text-red-900 font-bold text-2xl sm:text-3xl lg:text-4xl text-center mt-5 mb-8'>VEG RESTAURANT</h2>
       <div className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 justify-items-center'>
         {vegRes.slice(0, 4).map((res, index) => (
