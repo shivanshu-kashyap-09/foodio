@@ -21,9 +21,17 @@ const Header = () => {
   }, []);
 
   useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem("user"));
-    setUser(userData);
+    const syncUser = () => {
+      const userData = JSON.parse(localStorage.getItem("user"));
+      setUser(userData);
+    };
+
+    window.addEventListener("storage", syncUser);
+    syncUser();
+
+    return () => window.removeEventListener("storage", syncUser);
   }, []);
+
 
   useEffect(() => {
     const handleProfile = async () => {
@@ -76,27 +84,27 @@ const Header = () => {
   };
 
   return (
-    <motion.header 
-      ref={headerRef} 
+    <motion.header
+      ref={headerRef}
       variants={headerVariants}
       initial="initial"
       animate="animate"
       className={`w-full px-4 sm:px-6 lg:px-8 py-2 sm:py-3 flex items-center justify-between shadow-md fixed top-0 left-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-red-200' : 'bg-transparent'}`}
     >
-      <motion.div 
+      <motion.div
         className="flex items-center gap-2"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
-        <motion.img 
-          src={logo} 
-          alt="logo" 
+        <motion.img
+          src={logo}
+          alt="logo"
           className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12"
           variants={logoVariants}
           animate="rotate"
           whileHover="hover"
         />
-        <motion.h2 
+        <motion.h2
           className={`text-red-900 font-bold text-xl sm:text-2xl lg:text-3xl px-2 ${isScrolled ? 'text-red-900' : 'text-red-100'}`}
           whileHover={{ scale: 1.1 }}
         >
@@ -109,19 +117,19 @@ const Header = () => {
         onClick={toggleMenu}
         whileTap={{ scale: 0.9 }}
       >
-        <motion.svg 
-          className="w-6 h-6 sm:w-7 sm:h-7" 
-          fill="none" 
-          stroke="currentColor" 
+        <motion.svg
+          className="w-6 h-6 sm:w-7 sm:h-7"
+          fill="none"
+          stroke="currentColor"
           viewBox="0 0 24 24"
           animate={{ rotate: isMenuOpen ? 180 : 0 }}
           transition={{ duration: 0.3 }}
         >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} 
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
           />
         </motion.svg>
       </motion.button>
@@ -150,15 +158,15 @@ const Header = () => {
               animate="animate"
               whileHover="hover"
             >
-              <Link 
-                className={`font-semibold text-sm sm:text-base lg:text-lg px-3 py-2 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'} lg:mx-1`} 
+              <Link
+                className={`font-semibold text-sm sm:text-base lg:text-lg px-3 py-2 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'} lg:mx-1`}
                 to={item.to}
               >
                 {item.label}
               </Link>
             </motion.div>
           ))}
-          
+
           {!user ? (
             <>
               {[
@@ -173,8 +181,8 @@ const Header = () => {
                   animate="animate"
                   whileHover="hover"
                 >
-                  <Link 
-                    className={`font-semibold text-sm sm:text-base lg:text-lg px-3 py-2 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'} lg:mx-1`} 
+                  <Link
+                    className={`font-semibold text-sm sm:text-base lg:text-lg px-3 py-2 rounded hover:bg-red-500 hover:text-white ${isScrolled ? 'text-red-900' : 'text-red-400'} lg:mx-1`}
                     to={item.to}
                   >
                     {item.label}

@@ -113,7 +113,7 @@ const Login = () => {
           {/* Social Login */}
           <div className="text-center mb-4">
             <a
-              href="https://manage.foodiv.com/social/auth/google"
+              href={`${import.meta.env.VITE_URL}/auth/googleoauth2`}
               className="inline-flex items-center gap-2 text-sm font-medium border border-gray-300 px-4 py-2 rounded-full hover:bg-gray-100"
             >
               <img

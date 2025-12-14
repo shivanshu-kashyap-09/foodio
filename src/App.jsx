@@ -9,6 +9,7 @@ import WhishList from './Pages/WhishList';
 import DishDetail from "./Pages/DishDetail";
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
+import GoogleAuthSuccess from "./Pages/GoogleAuthSuccess";
 import Choose from './Components/Choose';
 import Contact from './Components/Contact';
 import Forget from './Pages/Forget';
@@ -21,8 +22,8 @@ import 'react-toastify/dist/ReactToastify.css';
 const App = () => {
   useEffect(() => {
     axios.get(`${import.meta.env.VITE_URL}/ping`)
-      .then(() => console.log("✅ Backend is awake"))
-      .catch(() => console.warn("⚠️ Could not wake backend"));
+      .then(() => console.log("Backend is awake"))
+      .catch(() => console.warn("Could not wake backend"));
   }, []);
   return (
     <Router>
@@ -38,6 +39,7 @@ const App = () => {
           <Route path="login" element={<Login />} />
           <Route path="signup" element={<Signup />} />
           <Route path='/forget-password' element={<Forget />} />
+          <Route path="/oauth2-success" element={<GoogleAuthSuccess />} />
           <Route path='/profile' element={<Profile />} />
           <Route path='/thali/description/:thali_id' element={<ThaliDesc/>} />
           <Route path='/restaurant/:type/:res_name/:res_id' element={<RestaurantById/>} />
