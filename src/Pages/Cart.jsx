@@ -80,23 +80,89 @@ const Cart = () => {
   };
 
   const handleOrder = async () => {
+    if (!selected) {
+      toast.error("Please select a payment method");
+      return;
+    }
+
+    // CASH ON DELIVERY
+    if (selected === "Cash") {
+      await placeOrder("Cash");
+      return;
+    }
+
+    // LOAD RAZORPAY
+    const loaded = await loadRazorpay();
+    if (!loaded) {
+      toast.error("Razorpay SDK failed to load");
+      return;
+    }
+
     try {
-      const response = await axios.post(`${import.meta.env.VITE_URL}/order/insert/${USER_ID}`, {
-        items: total_items,
-        total: totalToPay,
-        payment: selected,
-        delivery_status: "pending",
-      });
-      if (response.status === 201) {
-        toast.success("Order placed successfully");
-        await axios.delete(`${import.meta.env.VITE_URL}/cart/delete/all/${USER_ID}`);
-        handleGetCart();
-      }
-    } catch (error) {
-      toast.error("Order failed");
-      console.error(error);
+      // 1️⃣ Create order from backend
+      const orderRes = await axios.post(
+        `${import.meta.env.VITE_URL}/razorpay/create-order`,
+        {
+          amount: Math.round(totalToPay),
+          currency: "INR",
+        }
+      );
+
+      const order = orderRes.data;
+
+      // 2️⃣ Razorpay options
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Foodio",
+        description: "Food Order Payment",
+        order_id: order.id,
+
+        method: {
+          upi: true,
+          card: true,
+          netbanking: true,
+          wallet: true,
+        },
+
+        upi: {
+          flow: "collect"     
+        },
+
+        handler: async (response) => {
+          // 3️⃣ Verify payment
+          const verifyRes = await axios.post(
+            `${import.meta.env.VITE_URL}/razorpay/verify-payment`,
+            response
+          );
+
+          if (verifyRes.data.success) {
+            toast.success("Payment successful 🎉");
+            await placeOrder("Online");
+          } else {
+            toast.error("Payment verification failed");
+          }
+        },
+
+        prefill: {
+          name: user?.user_name,
+          email: user?.user_gmail,
+          contact: user?.user_phone,
+        },
+
+        theme: { color: "#dc2626" },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Payment failed");
     }
   };
+
 
   const handleSelect = (method) => setSelected(method);
 
@@ -130,6 +196,42 @@ const Cart = () => {
       console.error(err);
     }
   };
+
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => { resolve(true); }
+      script.onerror = () => { resolve(false); }
+      document.body.appendChild(script);
+    });
+  }
+
+  const placeOrder = async (paymentType) => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_URL}/order/insert/${USER_ID}`,
+        {
+          items: total_items,
+          total: totalToPay,
+          payment: paymentType,
+          delivery_status: "pending",
+        }
+      );
+
+      if (response.status === 201) {
+        toast.success("Order placed successfully");
+        await axios.delete(
+          `${import.meta.env.VITE_URL}/cart/delete/all/${USER_ID}`
+        );
+        handleGetCart();
+      }
+    } catch (error) {
+      toast.error("Order failed");
+      console.error(error);
+    }
+  };
+
 
   useEffect(() => {
     handleGetCart();
