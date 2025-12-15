@@ -1,3 +1,4 @@
+#hide
 .env
 .env.local
 .env.*
