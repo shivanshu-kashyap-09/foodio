@@ -345,28 +345,6 @@ const Cart = () => {
               </div>
             ))}
           </div>
-
-          {selected === 'UPI' && (
-            <input type="text" placeholder="example@upi" className="w-full border px-4 py-2 rounded text-sm sm:text-base mb-4" />
-          )}
-          {selected === 'Card' && (
-            <div className="space-y-4 mb-4">
-              <input type="text" placeholder="xxxx-xxxx-xxxx-xxxx" className="w-full border px-4 py-2 rounded text-sm sm:text-base" />
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <input type="text" placeholder="MM/YY" className="w-full sm:w-1/2 border px-4 py-2 rounded text-sm sm:text-base" />
-                <input type="password" placeholder="CVV" className="w-full sm:w-1/2 border px-4 py-2 rounded text-sm sm:text-base" />
-              </div>
-            </div>
-          )}
-          {selected === 'NetBanking' && (
-            <select className="w-full border px-4 py-2 rounded text-sm sm:text-base mb-4">
-              <option value="">-- Select Bank --</option>
-              <option>SBI</option>
-              <option>HDFC</option>
-              <option>ICICI</option>
-              <option>Axis</option>
-            </select>
-          )}
           {selected === 'Cash' && (
             <div className="text-green-600 text-xs sm:text-sm font-medium mb-4">
               You'll pay with cash when the order is delivered.
