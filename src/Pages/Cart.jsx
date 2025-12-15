@@ -17,7 +17,7 @@ const Cart = () => {
         setCartItems(response.data);
       }
     } catch (error) {
-      toast.error("Error in getting cart");
+      // toast.error("Error in getting cart");
       console.error(error);
     }
   };

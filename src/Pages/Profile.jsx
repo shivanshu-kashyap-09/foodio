@@ -18,7 +18,7 @@ const Profile = () => {
       const res = await axios.get(`${import.meta.env.VITE_URL}/order/get/${USER_ID}`);
       if (res.status === 200) setOrder(res.data);
     } catch (error) {
-      toast.error("Failed to fetch orders!");
+      // toast.error("Failed to fetch orders!");
       console.error(error);
     }
   };
@@ -33,7 +33,7 @@ const Profile = () => {
       const res = await axios.get(`${import.meta.env.VITE_URL}/user/get/${USER_ID}`);
       if (res.status === 200) setUser(res.data);
     } catch (error) {
-      toast.error("Failed to fetch user profile!");
+      // toast.error("Failed to fetch user profile!");
       console.error(error);
     }
   };
@@ -60,7 +60,7 @@ const Profile = () => {
         handleUser();
       }
     } catch (err) {
-      toast.error("Failed to update profile.");
+      // toast.error("Failed to update profile.");
       console.error(err);
     }
   };
@@ -104,15 +104,15 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 pt-16 pb-6 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-6 sm:gap-8 lg:gap-10 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-100 pt-22 pb-6 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-6 sm:gap-8 lg:gap-10 max-w-7xl mx-auto">
       <div className="bg-white shadow-lg rounded-xl p-4 sm:p-6 lg:p-8 w-full md:w-1/2">
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-red-700 mb-6 sm:mb-8">My Profile</h2>
         <button
           onClick={() => setEditProfile(!editProfile)}
-          className="absolute top-18 right-8 text-red-700 hover:text-red-900"
+          className="absolute top-28 left-141 text-red-700 hover:text-red-900"
           title="Edit Profile"
         >
-          <FaEdit size={18} />
+          <FaEdit size={22} />
         </button>
         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 border-b pb-4 sm:pb-6 mb-4 sm:mb-6">
           <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48">
@@ -184,7 +184,7 @@ const Profile = () => {
             className="absolute top-0 right-0 text-red-700 hover:text-red-900"
             title="Edit Address"
           >
-            <FaEdit size={16} sm:size={18} />
+            <FaEdit size={22} sm:size={18} />
           </button>
           {editAddress ? (
             <textarea

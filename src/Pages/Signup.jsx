@@ -125,6 +125,22 @@ const Signup = () => {
           </button>
         </form>
 
+        <div className="text-center mb-4">
+            <a
+              href={`${import.meta.env.VITE_URL}/auth/googleoauth2`}
+              className="inline-flex items-center gap-2 text-sm font-medium border border-gray-300 px-4 py-2 rounded-full hover:bg-gray-100"
+            >
+              <img
+                src="https://foodivapp.s3-ap-south-1.amazonaws.com/1744197002googlepng.png"
+                alt="Google"
+                width="20"
+                height="20"
+              />
+              Continue with Google
+            </a>
+          </div>
+
+
         <div className="text-sm text-center mt-4">
           Already have an account?{" "}
           <Link to="/login" className="text-blue-500 hover:underline">Log In</Link>

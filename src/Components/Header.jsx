@@ -197,7 +197,7 @@ const Header = () => {
                 user.user_img
                   ? user.user_img.startsWith('http')
                     ? user.user_img
-                    : `${import.meta.env.VITE_URL}${user.user_img}`
+                    : `${import.meta.env.VITE_URL}/${user.user_img}`
                   : "https://static.vecteezy.com/system/resources/previews/002/002/403/non_2x/man-with-beard-avatar-character-isolated-icon-free-vector.jpg"
               }
               alt="profile"
