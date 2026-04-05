@@ -8,12 +8,14 @@ const ThaliDesc = () => {
   const [thali, setThali] = useState([]);
   const [dish, setDish] = useState([]);
 
+  const USER_ID = localStorage.getItem('user_id');
+
   // Fetch thali details
   const handleThali = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/thali/get/id/${thali_id}`);
+      const response = await axios.get(`${import.meta.env.VITE_URL}/thali/${thali_id}`);
       if (response.status === 200) {
-        setThali(response.data);
+        setThali(response.data.data);
       }
     } catch (error) {
       console.error("Error fetching thali:", error);
@@ -23,9 +25,9 @@ const ThaliDesc = () => {
   // Fetch thali dishes
   const handleDish = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/thalidish/thali/${thali_id}`);
+      const response = await axios.get(`${import.meta.env.VITE_URL}/thali/${thali_id}/dishes`);
       if (response.status === 200) {
-        setDish(response.data);
+        setDish(response.data.data.dishes || []);
       }
     } catch (error) {
       console.error("Error fetching dishes:", error);
@@ -35,12 +37,15 @@ const ThaliDesc = () => {
   // Add to cart
   const handleCart = async () => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_URL}/cart/insert/1`, {
-        dish_img: thali.thali_img,
-        dish_name: thali.thali_name,
-        dish_price: thali.price,
-        dish_description: thali.description,
-        dish_qty: 1
+      const response = await axios.post(`${import.meta.env.VITE_URL}/user/cart/${USER_ID}/cart/add`,{
+        itemId: thali_id,
+        quantity: 1,
+        menuType: 'thali' // Assuming thali is a type
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
 
       if (response.status === 201) {

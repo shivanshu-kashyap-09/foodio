@@ -82,7 +82,9 @@ const SouthIndian = ({southDish}) => {
         )}
       </div>
       <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mx-4 sm:mx-6 md:mx-8 lg:mx-12'>
-        {(searchVisible && searchQuery && filteredData.length > 0 ? filteredData : southDish).slice(0,8).map((dish, index) => (
+        {(Array.isArray(searchVisible && searchQuery && filteredData.length > 0 ? filteredData : southDish)
+          ? (searchVisible && searchQuery && filteredData.length > 0 ? filteredData : southDish)
+          : []).slice(0, 8).map((dish, index) => (
           <DishCard key={index} {...dish} />
         ))}
       </div>

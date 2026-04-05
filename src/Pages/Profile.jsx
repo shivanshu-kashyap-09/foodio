@@ -3,7 +3,9 @@ import { FaXmark } from 'react-icons/fa6';
 import { FaEdit } from 'react-icons/fa';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { FaTruck, FaBox, FaChevronRight } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Profile = () => {
   const [order, setOrder] = useState([]);
@@ -12,11 +14,19 @@ const Profile = () => {
   const [editAddress, setEditAddress] = useState(false);
   const navigate = useNavigate();
   const USER_ID = localStorage.getItem('user_id');
+  const USER = JSON.parse(localStorage.getItem('user'));
 
   const handleOrders = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_URL}/order/get/${USER_ID}`);
-      if (res.status === 200) setOrder(res.data);
+      const res = await axios.get(`${import.meta.env.VITE_URL}/user/orders/${USER_ID}/orders`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      if (res.status === 200) setOrder(res.data.data || []);
     } catch (error) {
       // toast.error("Failed to fetch orders!");
       console.error(error);
@@ -30,8 +40,17 @@ const Profile = () => {
         navigate('/login');
         return;
       }
-      const res = await axios.get(`${import.meta.env.VITE_URL}/user/get/${USER_ID}`);
-      if (res.status === 200) setUser(res.data);
+      const res = await axios.get(`${import.meta.env.VITE_URL}/user/profile`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (res.status === 200) {
+        setUser(res.data.data);
+        localStorage.setItem('user', JSON.stringify(res.data.data));
+        localStorage.setItem('user_id', res.data.data.id);
+      }
     } catch (error) {
       // toast.error("Failed to fetch user profile!");
       console.error(error);
@@ -49,7 +68,7 @@ const Profile = () => {
         formData.append('user_img', user.user_img);
       }
       const res = await axios.put(
-        `${import.meta.env.VITE_URL}/user/update/${USER_ID}`,
+        `${import.meta.env.VITE_URL}/user/update/profile`,
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
@@ -67,9 +86,7 @@ const Profile = () => {
 
   const handleCancelOrder = async (order_id) => {
     try {
-      const res = await axios.put(`${import.meta.env.VITE_URL}/order/update/${USER_ID}/${order_id}`, {
-        delivery_status: "Cancelled"
-      });
+      const res = await axios.put(`${import.meta.env.VITE_URL}/user/orders/${USER_ID}/orders/${order_id}/cancel`);
       if (res.status === 200) {
         toast.success("Order cancelled successfully!");
         handleOrders();
@@ -105,15 +122,21 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 pt-22 pb-6 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-6 sm:gap-8 lg:gap-10 max-w-7xl mx-auto">
-      <div className="bg-white shadow-lg rounded-xl p-4 sm:p-6 lg:p-8 w-full md:w-1/2">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white shadow-2xl rounded-[2.5rem] p-8 sm:p-10 w-full md:w-1/2 border border-gray-50 relative overflow-hidden"
+      >
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 to-pink-600" />
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-red-700 mb-6 sm:mb-8">My Profile</h2>
-        <button
+        <motion.button
+          whileHover={{ rotate: 90 }}
           onClick={() => setEditProfile(!editProfile)}
-          className="absolute top-28 left-141 text-red-700 hover:text-red-900"
+          className="absolute top-10 right-10 text-red-600 hover:text-red-700 bg-red-50 p-3 rounded-2xl transition-all"
           title="Edit Profile"
         >
-          <FaEdit size={22} />
-        </button>
+          <FaEdit size={20} />
+        </motion.button>
         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 border-b pb-4 sm:pb-6 mb-4 sm:mb-6">
           <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48">
             <img
@@ -214,53 +237,80 @@ const Profile = () => {
             Logout
           </button>
         </div>
-      </div>
-      <div className="bg-white shadow-lg rounded-xl p-4 sm:p-6 lg:p-8 w-full md:w-1/2">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center text-red-700 mb-6 sm:mb-8">My Orders</h2>
-        {order.length === 0 ? (
-          <div className="flex justify-center items-center">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/13637/13637462.png"
-              alt="empty orders"
-              className="w-40 h-40 sm:w-48 sm:h-48 lg:w-56 lg:h-56 object-contain mx-auto"
-            />
-          </div>
-        ) : (
-          <div className="rounded-lg overflow-hidden">
-            <div className="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-3 bg-red-500 text-white font-semibold py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
-              <p className="text-center">Order ID</p>
-              <p className="text-center">Items</p>
-              <p className="text-center">Payment</p>
-              <p className="text-center hidden md:block">Total</p>
-              <p className="text-center">Status</p>
-              <p className="text-center">Action</p>
+      </motion.div>
+      <div className="w-full md:w-1/2 space-y-6">
+        <div className="bg-white shadow-xl rounded-[2.5rem] p-8 border border-gray-50 h-full">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-black text-gray-900">My Orders</h2>
+            <div className="bg-red-50 text-red-600 px-4 py-1.5 rounded-2xl font-bold text-xs uppercase tracking-wider">
+              {order.length} Total
             </div>
-            {order.map((item) => (
-              <div key={item.order_id} className="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-3 items-center border-b px-2 sm:px-4 py-2 sm:py-3 hover:bg-gray-50 transition text-xs sm:text-sm">
-                <p className="text-center font-semibold text-red-700">{item.order_id}</p>
-                <p className="text-gray-700 ml-5">{item.items}</p>
-                <p className="text-green-700 font-medium text-center">{item.payment}</p>
-                <p className="text-blue-700 font-medium text-center hidden md:block">₹{item.total}</p>
-                <p className={`text-center font-medium ${item.delivery_status === "Delivered" ? "text-green-600" : "text-yellow-600"}`}>
-                  {item.delivery_status}
-                </p>
-                <div className="flex justify-center gap-2 sm:gap-3">
-                  <button
-                    title="Cancel Order"
-                    className={`p-1 sm:p-2 rounded-full transition 
-                      ${item.delivery_status?.toLowerCase() === 'panding' || item.delivery_status?.toLowerCase() === 'pending'
-                        ? 'bg-red-100 hover:bg-red-200 text-red-700 cursor-pointer'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
-                    disabled={item.delivery_status?.toLowerCase() !== 'panding' && item.delivery_status?.toLowerCase() !== 'pending'}
-                    onClick={() => handleCancelOrder(item.order_id)}
-                  >
-                    <FaXmark size={14} sm:size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
-        )}
+
+          {order.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/13637/13637462.png"
+                alt="empty orders"
+                className="w-40 h-40 opacity-20 grayscale mb-6"
+              />
+              <p className="text-gray-400 font-bold">No orders found</p>
+              <Link to="/" className="mt-4 text-red-600 font-black text-sm uppercase tracking-widest hover:underline">Start Ordering</Link>
+            </div>
+          ) : (
+            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+              {order.map((item) => {
+                const isActive = !['delivered', 'cancelled'].includes(item.status?.toLowerCase());
+                return (
+                  <motion.div 
+                    key={item.id}
+                    whileHover={{ y: -5 }}
+                    className={`p-6 rounded-3xl border-2 transition-all ${isActive ? 'border-red-100 bg-red-50/30 shadow-red-50' : 'border-gray-50 bg-white hover:border-gray-100'}`}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${isActive ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                          <FaBox />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Order #FD-{item.id}</p>
+                          <h4 className="font-bold text-gray-900">{item.items || 'Delicious Food'}</h4>
+                        </div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-tighter border ${item.status === "Delivered" ? "bg-green-50 text-green-600 border-green-100" : "bg-orange-50 text-orange-600 border-orange-100"}`}>
+                        {item.status}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-dashed border-gray-200">
+                      <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Amount</p>
+                        <p className="font-black text-gray-900 text-lg">₹{item.total_amount}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        {item.status?.toLowerCase() === 'pending' && (
+                          <button
+                            onClick={() => handleCancelOrder(item.id)}
+                            className="bg-white border-2 border-red-100 text-red-500 p-3 rounded-2xl hover:bg-red-50 transition-colors"
+                            title="Cancel"
+                          >
+                            <FaXmark />
+                          </button>
+                        )}
+                        <Link
+                          to={`/order/tracking/${item.id}`}
+                          className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${isActive ? 'bg-red-600 text-white shadow-lg shadow-red-100 hover:bg-red-700' : 'bg-gray-900 text-white hover:bg-black'}`}
+                        >
+                          {isActive ? <><FaTruck /> Track</> : 'View Details'}
+                        </Link>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

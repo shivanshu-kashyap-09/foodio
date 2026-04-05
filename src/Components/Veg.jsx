@@ -3,8 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DishCard from './DishCard';
 import { FaFilter, FaSearch } from 'react-icons/fa';
 import Filter from '../Components/Filter';
+import axios from 'axios';
 
-const Veg = ({vegDish}) => {
+const Veg = ({ vegDish }) => {
+  const updatedVegDish = Array.isArray(vegDish) 
+    ? vegDish.map(dish => ({
+        ...dish,
+        restaurant_id: 2
+      })) 
+    : [];
+
   const [filter, setFilter] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -12,11 +20,7 @@ const Veg = ({vegDish}) => {
   const filterRef = useRef(null);
   const searchRef = useRef(null);
 
-  const allDishes = [
-    "Paneer", "Pav Bhaji", "Veg Biryani", "Masala Dosa",
-    "Aloo Tikki", "Veg Burger", "Rajma Chawal", "Palak Paneer",
-    "Mix Veg", "Chole Bhature", "Malai Kofta", "Dal Makhani"
-  ];
+  const user_role = localStorage.getItem('role');
 
   const handleFilter = () => {
     setFilter(!filter);
@@ -31,6 +35,24 @@ const Veg = ({vegDish}) => {
     }
     setSearchVisible(!searchVisible);
   };
+
+  const handleDishUpdate = async (updatedDish) => {
+    try {
+      await axios.put(
+        `${import.meta.env.VITE_URL}/dish/edit/${updatedDish.dish_id}`,
+        updatedDish
+      );
+
+      setVegDish(prev =>
+        prev.map(d =>
+          d.dish_id === updatedDish.dish_id ? updatedDish : d
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -78,7 +100,7 @@ const Veg = ({vegDish}) => {
   };
 
   const buttonVariants = {
-    hover: { 
+    hover: {
       scale: 1.1,
       transition: {
         type: "spring",
@@ -97,13 +119,13 @@ const Veg = ({vegDish}) => {
       className="py-8 sm:py-12"
     >
       <div className='relative flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 mb-6 px-4 sm:px-6 md:px-8'>
-        <motion.h2 
+        <motion.h2
           className='text-red-900 font-bold text-2xl sm:text-3xl md:text-4xl text-left sm:ml-[40%]'
           variants={itemVariants}
         >
           VEG FOOD
         </motion.h2>
-        <motion.div 
+        <motion.div
           className="flex items-center gap-3 flex-wrap"
           variants={itemVariants}
         >
@@ -129,8 +151,8 @@ const Veg = ({vegDish}) => {
           </div>
           <AnimatePresence>
             {searchVisible && (
-              <motion.div 
-                className="border-2 rounded-2xl px-3 h-10 flex items-center text-red-500 w-full sm:w-64" 
+              <motion.div
+                className="border-2 rounded-2xl px-3 h-10 flex items-center text-red-500 w-full sm:w-64"
                 ref={searchRef}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -150,8 +172,8 @@ const Veg = ({vegDish}) => {
         </motion.div>
         <AnimatePresence>
           {filter && (
-            <motion.div 
-              ref={filterRef} 
+            <motion.div
+              ref={filterRef}
               className="absolute right-4 top-12 sm:right-6 sm:top-16 z-10"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -163,11 +185,13 @@ const Veg = ({vegDish}) => {
           )}
         </AnimatePresence>
       </div>
-      <motion.div 
+      <motion.div
         className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mx-4 sm:mx-6 md:mx-8 lg:mx-12'
         variants={containerVariants}
       >
-        {(searchVisible && searchQuery && filteredData.length > 0 ? filteredData : vegDish).slice(0,8).map((dish, index) => (
+        {(Array.isArray(searchVisible && searchQuery && filteredData.length > 0 ? filteredData : updatedVegDish) 
+          ? (searchVisible && searchQuery && filteredData.length > 0 ? filteredData : updatedVegDish) 
+          : []).slice(0, 14).map((dish, index) => (
           <motion.div
             key={index}
             variants={itemVariants}
@@ -175,7 +199,18 @@ const Veg = ({vegDish}) => {
             whileHover="hover"
             className="transform-gpu"
           >
-            <DishCard {...dish} />
+            <DishCard
+              key={dish.dish_id || dish.id}
+              restaurant_id={dish.restaurant_id}
+              dish_id={dish.dish_id || dish.id}
+              menuType="veg"
+              dish_name={dish.dish_name || dish.item_name}
+              dish_image={dish.dish_image || dish.item_image || dish.dish_img}
+              dish_description={dish.dish_description || dish.item_description || dish.dish_desc}
+              dish_price={dish.dish_price || dish.item_price}
+              dish_rating={dish.dish_rating || dish.item_rating}
+              onEdit={handleDishUpdate}
+            />
           </motion.div>
         ))}
       </motion.div>

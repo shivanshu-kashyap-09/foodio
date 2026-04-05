@@ -18,14 +18,15 @@ const Login = () => {
         password: password,
       });
 
-      const { result, token } = response.data;
       if (response.status === 200) {
+        const { token, user } = response.data.data;
         localStorage.setItem("isAuthenticated", "true");
         localStorage.setItem("token", token); 
-        localStorage.setItem("user_id", result.user_id);
-        localStorage.setItem("user", JSON.stringify(result));
+        localStorage.setItem("user_id", user.id);
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("role", user.role);
 
-        setUser(result);
+        setUser(user);
 
         toast.success("Login Successfully");
         navigate('/');

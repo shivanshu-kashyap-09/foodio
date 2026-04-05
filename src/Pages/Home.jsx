@@ -9,6 +9,7 @@ import Contact from "../Components/Contact";
 import HeroRestaurant from '../Components/HeroRestaurant';
 import Banner from '../Components/Banner';
 import Thali from '../Components/Thali';
+import SearchBar from '../Components/SearchBar';
 import axios from 'axios';
 
 const restaurantData = [
@@ -206,11 +207,13 @@ const Home = () => {
   const [nonVegDish, setNonVegDish] = useState([]);
   const [southDish, setSouthDish] = useState([]);
 
+  const user_role = localStorage.getItem('role');
+
   const handleThali = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/thali/all`);
+      const response = await axios.get(`${import.meta.env.VITE_URL}/thali`);
       if (response.status === 200) {
-        setThalis(response.data);
+        setThalis(response.data.data);
       }
     } catch (error) {
       console.error('Error fetching thalis:', error);
@@ -258,21 +261,20 @@ const Home = () => {
 
   const handleVeg = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/vegmenu/restaurant/2`);
+      const response = await axios.get(`${import.meta.env.VITE_URL}/menus/veg`);
       if (response.status == 200) {
-        setVegDish(response.data);
+        setVegDish(response.data.data);
       }
     } catch (error) {
       console.log(error);
-
     }
   }
 
   const handleNonVeg = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/nonvegmenu/id/1`);
+      const response = await axios.get(`${import.meta.env.VITE_URL}/menus/nonveg`);
       if (response.status == 200) {
-        setNonVegDish(response.data);
+        setNonVegDish(response.data.data);
       }
     } catch (error) {
       console.log(error);
@@ -281,9 +283,9 @@ const Home = () => {
 
   const handleSouth = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/southindianmenu/id/1`);
+      const response = await axios.get(`${import.meta.env.VITE_URL}/menus/southindian`);
       if (response.status == 200) {
-        setSouthDish(response.data);
+        setSouthDish(response.data.data);
       }
     } catch (error) {
       console.log(error);
@@ -357,7 +359,14 @@ const Home = () => {
       </motion.div>
 
       <motion.div 
-        className="h-auto grid grid-cols-1 lg:grid-cols-3 mt-4 mx-4 sm:mx-8 lg:ml-20 gap-4"
+        variants={sectionVariants}
+        className="mt-[-40px] relative z-10 px-4"
+      >
+        <SearchBar />
+      </motion.div>
+
+      <motion.div 
+        className="h-auto grid grid-cols-1 lg:grid-cols-3 mt-4 mx-15 sm:mx-8 lg:ml-20 gap-4"
         variants={gridVariants}
       >
         {restaurantData.map((restaurant, index) => (

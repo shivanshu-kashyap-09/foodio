@@ -5,10 +5,18 @@ import { useNavigate } from 'react-router-dom';
 
 const RestaurantCard = ({ restaurant, type }) => {
   const navigate = useNavigate();
+  const res_name = restaurant.restaurant_name || restaurant.res_name;
+  const res_id = restaurant.id || restaurant.res_id;
+  const res_img = restaurant.restaurant_img || restaurant.res_img;
+  const res_rating = restaurant.rating || restaurant.res_rating;
+  const res_address = restaurant.restaurant_address || restaurant.res_address || restaurant.res_location;
+  const res_phone = restaurant.restaurant_phone || restaurant.res_phone;
+
   const handleRestaurantById = async () => {
-    navigate(`/restaurant/${type}/${restaurant.res_name}/${restaurant.res_id}`)
+    navigate(`/restaurant/${type}/${res_name}/${res_id}`)
   }
 
+  // ... (container variants omitted for clarity, but I'll keep the full structure in tool call)
   const cardVariants = {
     hidden: { opacity: 0, scale: 0.8 },
     visible: {
@@ -45,8 +53,8 @@ const RestaurantCard = ({ restaurant, type }) => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}>
         <motion.img 
-          src={restaurant.res_img} 
-          alt={restaurant.res_name} 
+          src={res_img} 
+          alt={res_name} 
           className="rounded-full mx-auto w-32 h-32 sm:w-40 sm:h-40 object-cover shadow-md"
           whileHover={{ scale: 1.1, rotate: 5 }}
           transition={{ type: "spring", stiffness: 300, damping: 15 }}
@@ -63,7 +71,7 @@ const RestaurantCard = ({ restaurant, type }) => {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}>
-          {restaurant.res_rating}
+          {res_rating}
         </motion.p>
       </motion.div>
       <motion.div 
@@ -74,14 +82,14 @@ const RestaurantCard = ({ restaurant, type }) => {
         <motion.h3 
           className="text-base sm:text-lg font-bold text-red-900 mb-2"
           whileHover={{ scale: 1.05 }}>
-          {restaurant.res_name}
+          {res_name}
         </motion.h3>
         <motion.div 
           className="mt-2 flex items-center justify-center text-sm sm:text-md font-semibold text-red-900"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}>
-          {restaurant.res_address || restaurant.res_location}
+          {res_address}
         </motion.div>
         <motion.div 
           className="mt-2 flex items-center justify-center text-sm sm:text-md font-semibold text-red-900"
@@ -89,11 +97,10 @@ const RestaurantCard = ({ restaurant, type }) => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}>
           <FaPhone className="mr-2 text-xs sm:text-sm" />
-          {restaurant.res_phone}
+          {res_phone}
         </motion.div>
       </motion.div>
     </motion.div>
   )
 }
-
 export default RestaurantCard

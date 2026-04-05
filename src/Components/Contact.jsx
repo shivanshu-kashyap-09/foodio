@@ -2,15 +2,17 @@ import React, {useState} from 'react';
 import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const Contact = () => {
   const [name, setname] = useState("");
   const [email, setemail] = useState("");
   const [message, setmessage] = useState("");
+  const [phone, setphone] = useState("");
 
   const handleSubmit = async ()  => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_URL}/contact`, {name, email, message});
+      const response = await axios.post(`${import.meta.env.VITE_URL}/contact/submit`, {name, email, phone, message});
       if (response.status === 201) {
         toast.success("Message sent successfully!");
         setname("");
@@ -58,14 +60,14 @@ const Contact = () => {
   };
   return (
     <motion.div 
-      className="min-h-screen bg-gradient-to-br from-[#fdf6f1] to-[#eae6f7] px-4 sm:px-6 md:px-8 py-8 sm:py-10 flex flex-col md:flex-row justify-between items-start relative mt-18"
+      className="min-h-screen bg-gradient-to-br from-[#fdf6f1] to-[#eae6f7] px-0 sm:px-6 md:px-8 py-8 sm:py-10 flex flex-col md:flex-row justify-between items-start relative mt-18"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true }}
       variants={containerVariants}
     >
       <motion.div 
-        className="w-full md:w-1/3 space-y-4 sm:space-y-6 text-red-900 z-10 ml-10"
+        className="w-full md:w-1/3 space-y-6 sm:space-y-6 text-red-900 z-10 ml-10"
         variants={itemVariants}
       >
         <motion.h2 
@@ -184,7 +186,8 @@ const Contact = () => {
             className="w-full border border-gray-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm sm:text-base"
             whileFocus={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            setName={(e) => {e.target.value}}
+            value={name}
+            onChange={(e) => setname(e.target.value)}
           />
           <motion.input
             type="email"
@@ -193,7 +196,18 @@ const Contact = () => {
             className="w-full border border-gray-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm sm:text-base"
             whileFocus={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            setEmail={(e) => {e.target.value}}
+            value={email}
+            onChange={(e) => setemail(e.target.value)}
+          />
+          <motion.input
+            type="number"
+            placeholder="Enter Phone Number"
+            required
+            className="w-full border border-gray-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm sm:text-base"
+            whileFocus={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            value={phone}
+            onChange={(e) => setphone(e.target.value)}
           />
           <motion.textarea
             placeholder="Enter Message"
@@ -202,7 +216,8 @@ const Contact = () => {
             className="w-full border border-gray-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm sm:text-base"
             whileFocus={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            setMessage={(e) => {e.target.value}}
+            value={message}
+            onChange={(e) => setmessage(e.target.value)}
           />
           <motion.button
             type="button"

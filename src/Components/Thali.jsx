@@ -92,7 +92,7 @@ const Thali = ({thalis}) => {
           Indian Veg Thalis
         </motion.h2>
         <Slider {...settings}>
-          {thalis.map((thali, index) => (
+          {Array.isArray(thalis) && thalis.map((thali, index) => (
             <div key={index} className="px-1 sm:px-2">
               <motion.div 
                 className="bg-white rounded-xl text-center h-80 sm:h-92 shadow-lg hover:shadow-xl overflow-hidden mx-auto max-w-xs sm:max-w-sm transform transition-all duration-300"

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import logo from "../assets/logo.png";
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import SearchBar from './SearchBar';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -37,7 +38,14 @@ const Header = () => {
     const handleProfile = async () => {
       if (!USER_ID) return;
       try {
-        const res = await axios.get(`${import.meta.env.VITE_URL}/user/get/${USER_ID}`);
+        const res = await axios.get(`${import.meta.env.VITE_URL}/user/profile`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }
+        );
         if (res.status === 200) setUser(res.data);
       } catch (error) {
         console.error(error);
@@ -134,6 +142,11 @@ const Header = () => {
         </motion.svg>
       </motion.button>
 
+      {/* Center Search Bar - Hidden on Mobile, shown on Large Screens */}
+      <div className="hidden lg:block flex-1 max-w-md mx-8">
+        <SearchBar isCompact={true} className="!border-red-200/50" />
+      </div>
+
       <AnimatePresence>
         <motion.nav
           className={`lg:flex flex-col lg:flex-row lg:gap-3 lg:items-center absolute lg:static top-full left-0 w-full lg:w-auto bg-red-200 lg:bg-transparent transition-all duration-300 ${isMenuOpen ? 'flex' : 'hidden'}`}
@@ -146,8 +159,8 @@ const Header = () => {
             { to: "/", label: "Home" },
             { to: "/restaurant", label: "Restaurant" },
             { to: "/cart", label: "Cart" },
+            { to: "/orders", label: "Orders" },
             { to: "/wishlist", label: "Wishlist" },
-            { to: "/choose", label: "Choose us" },
             { to: "/contact", label: "Contact" }
           ].map((item, i) => (
             <motion.div
