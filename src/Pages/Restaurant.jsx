@@ -116,11 +116,18 @@ const Restaurant = () => {
     </>
   );
 
-  // 🚨 loading state
   if (loading) {
     return (
-      <div className="mt-20 text-center text-xl font-semibold">
-        Loading restaurants & menus...
+      <div className="mt-20 p-6 space-y-4 max-w-7xl mx-auto">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((_, i) => (
+          <div key={i} className="animate-pulse flex gap-4 items-center">
+            <div className="w-16 h-16 bg-gray-300 rounded"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }

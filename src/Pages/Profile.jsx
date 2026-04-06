@@ -48,8 +48,6 @@ const Profile = () => {
       });
       if (res.status === 200) {
         setUser(res.data.data);
-        localStorage.setItem('user', JSON.stringify(res.data.data));
-        localStorage.setItem('user_id', res.data.data.id);
       }
     } catch (error) {
       // toast.error("Failed to fetch user profile!");
@@ -298,8 +296,8 @@ const Profile = () => {
                           </button>
                         )}
                         <Link
-                          to={`/order/tracking/${item.id}`}
-                          className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${isActive ? 'bg-red-600 text-white shadow-lg shadow-red-100 hover:bg-red-700' : 'bg-gray-900 text-white hover:bg-black'}`}
+                          to={`/order/tracking/${item.order_id}`}
+                          className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${isActive ? 'bg-red-600 text-white shadow-lg shadow-red-100 hover:bg-red-700' : 'bg-red-800 text-white hover:bg-red-900'}`}
                         >
                           {isActive ? <><FaTruck /> Track</> : 'View Details'}
                         </Link>

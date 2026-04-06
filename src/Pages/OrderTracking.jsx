@@ -28,7 +28,7 @@ const OrderTracking = () => {
         { key: 'delivered', label: 'Delivered', icon: <FaHome />, color: 'bg-green-500' }
     ];
 
-    const currentStatusIdx = tracking ? statuses.findIndex(s => s.key === tracking.status) : 0;
+    const currentStatusIdx = tracking?.order ? statuses.findIndex(s => s.key === tracking.order.status?.toLowerCase()) : 0;
 
     const fetchTracking = async () => {
         setLoading(true);
@@ -202,7 +202,7 @@ const OrderTracking = () => {
                                 Drop-off Location
                             </h3>
                             <p className="font-bold text-gray-800 leading-relaxed">
-                                {tracking?.address || "123, Foodie Heights, Cyber City, Gurgaon, Haryana - 122001"}
+                                {tracking?.order?.deliveryAddress || "123, Foodie Heights, Cyber City, Gurgaon, Haryana - 122001"}
                             </p>
                         </motion.div>
                     </div>

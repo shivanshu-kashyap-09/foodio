@@ -19,7 +19,12 @@ import RestaurantById from './Pages/RestaurantById';
 import OrderTracking from './Pages/OrderTracking';
 import MyOrders from './Pages/MyOrders';
 import SearchResults from './Pages/SearchResults';
+import AdminDashboard from './Pages/Admin/AdminDashboard';
+import DeliveryDashboard from './Pages/Delivery/DeliveryDashboard';
+import RestaurantDashboard from './Pages/Restaurant/RestaurantDashboard';
+import AIChatbot from './Components/AIChatbot/AIChatbot';
 import { ToastContainer } from 'react-toastify';
+
 import 'react-toastify/dist/ReactToastify.css';
 
 const App = () => {
@@ -65,9 +70,14 @@ const App = () => {
           <Route path='/order/tracking/:orderId' element={<OrderTracking />} />
           <Route path='/orders' element={<MyOrders />} />
           <Route path='/search' element={<SearchResults />} />
+          <Route path='/admin' element={<AdminDashboard />} />
+          <Route path='/delivery' element={<DeliveryDashboard />} />
+          <Route path='/restaurant/dashboard' element={<RestaurantDashboard />} />
         </Route>
       </Routes>
+      {/* <AIChatbot /> */}
       <ToastContainer position="top-right" autoClose={3000} />
+
     </Router>
   );
 }

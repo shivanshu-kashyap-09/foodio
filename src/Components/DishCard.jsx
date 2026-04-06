@@ -130,7 +130,7 @@ const DishCard = ({
   return (
 
     <motion.div
-      className="w-full max-w-xs sm:w-64 rounded-2xl bg-gradient-to-br from-red-50 via-white to-red-50 shadow-lg hover:shadow-xl p-6 relative text-center mx-auto border border-red-200"
+      className="w-full max-w-[280px] rounded-3xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-6 relative flex flex-col mx-auto border border-gray-100 transition-all duration-300 group"
       variants={cardVariants}
       initial="rest"
       whileHover="hover"
@@ -156,40 +156,17 @@ const DishCard = ({
           className="rounded-full mx-auto w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 object-cover shadow-md"
           variants={imageVariants}
         />
+        {/* Desktop cart and wishlist moved to bottom flex container */}
         <motion.div
-          className="absolute top-0 -right-2 sm:-right-4 bg-red-500 text-red-200 hover:bg-red-300 hover:text-red-600 rounded-full p-2 cursor-pointer"
-          onClick={handleCart}
+          className="absolute top-16 sm:top-10 lg:top-22 -right-2 sm:-right-4 bg-yellow-400 text-white rounded-full p-2 flex items-center gap-1 shadow-md"
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"
         >
-          <FaShoppingCart className="text-xs sm:text-sm h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
+          <FaStar className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+          <span className="text-xs sm:text-sm font-bold">{dish_rating}</span>
         </motion.div>
-        <motion.div
-          className="absolute top-8 sm:top-11 -right-2 sm:-right-4 bg-red-500 text-red-200 hover:bg-red-300 hover:text-red-600 rounded-full p-2 cursor-pointer"
-          onClick={handleWhishList}
-          variants={buttonVariants}
-          whileHover="hover"
-          whileTap="tap"
-        >
-          <FaHeart className="text-xs sm:text-sm h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
-        </motion.div>
-        <motion.div
-          className="absolute top-16 sm:top-10 lg:top-22 -right-2 sm:-right-4 bg-green-700 text-red-200 hover:bg-green-600 hover:text-red-600 rounded-full p-2"
-          variants={buttonVariants}
-          whileHover="hover"
-          whileTap="tap"
-        >
-          <FaStar className="text-xs sm:text-sm h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
-        </motion.div>
-        <motion.p
-          className='absolute top-24 sm:top-20 lg:top-32 -right-1 text-green-700 font-semibold text-xs sm:text-sm'
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          {dish_rating}
-        </motion.p>
+        {/* Rating text merged into star icon styling */}
       </div>
       <motion.div
         className="mt-4"
@@ -198,13 +175,23 @@ const DishCard = ({
         transition={{ delay: 0.1 }}
       >
         <h3 className="text-base sm:text-lg font-bold text-red-900 truncate">{dish_name}</h3>
-        <p className="text-xs sm:text-sm text-red-800 line-clamp-2">{final_dish_description}</p>
+        <p className="text-xs sm:text-sm text-gray-500 line-clamp-2 mt-1">{final_dish_description}</p>
         <motion.div
-          className="mt-2 flex items-center justify-center text-sm sm:text-md font-semibold text-red-900"
-          whileHover={{ scale: 1.1 }}
+          className="mt-4 flex items-center justify-between text-base sm:text-lg font-bold text-gray-900 border-t border-gray-100 pt-4"
+          whileHover={{ scale: 1.05 }}
         >
-          <FaRupeeSign className="mr-1 text-xs sm:text-sm" />
-          {dish_price}
+          <span className="flex items-center text-red-600">
+            <FaRupeeSign className="mr-0.5 text-sm" />
+            {dish_price}
+          </span>
+          <div className="flex gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={handleWhishList} className="p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors">
+              <FaHeart className="w-4 h-4" />
+            </button>
+            <button onClick={handleCart} className="p-2 bg-orange-50 text-orange-500 rounded-full hover:bg-orange-500 hover:text-white transition-colors">
+              <FaShoppingCart className="w-4 h-4" />
+            </button>
+          </div>
         </motion.div>
       </motion.div>
       {showModal && (

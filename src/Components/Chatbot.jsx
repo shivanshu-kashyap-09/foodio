@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { FaRobot, FaPaperPlane, FaTimes, FaMinus, FaRegSmile } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { TypeAnimation } from 'react-type-animation';
 
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -62,7 +63,7 @@ const Chatbot = () => {
                         initial={{ opacity: 0, scale: 0.8, y: 100 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8, y: 100 }}
-                        className="bg-white/95 backdrop-blur-xl border border-red-100 rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(220,38,38,0.3)] w-[90vw] sm:w-[400px] h-[600px] flex flex-col overflow-hidden mb-6"
+                        className="bg-white/95 backdrop-blur-xl border border-red-100 rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(220,38,38,0.3)] w-[90vw] sm:w-[400px] h-[520px] flex flex-col overflow-hidden mb-6"
                     >
                         {/* Header */}
                         <div className="bg-gradient-to-r from-red-600 to-red-500 p-6 flex items-center justify-between text-white shadow-lg">
@@ -97,12 +98,20 @@ const Chatbot = () => {
                                     key={idx}
                                     className={`flex ${chat.type === 'bot' ? 'justify-start' : 'justify-end'}`}
                                 >
-                                    <div className={`max-w-[85%] p-4 rounded-[1.5rem] shadow-sm text-sm font-medium leading-relaxed ${
-                                        chat.type === 'bot' 
-                                        ? 'bg-white border border-red-50 text-gray-800 rounded-tl-none' 
-                                        : 'bg-red-600 text-white rounded-tr-none shadow-red-200 shadow-md'
-                                    }`}>
-                                        {chat.text}
+                                    <div className={`max-w-[85%] p-4 rounded-[1.5rem] shadow-sm text-sm font-medium leading-relaxed ${chat.type === 'bot'
+                                            ? 'bg-white border border-red-50 text-gray-800 rounded-tl-none'
+                                            : 'bg-red-600 text-white rounded-tr-none shadow-red-200 shadow-md'
+                                        }`}>
+                                        {chat.type === 'bot' ? (
+                                            <TypeAnimation
+                                                sequence={[chat.text]}
+                                                speed={100}
+                                                wrapper="span"
+                                                cursor={true}
+                                            />
+                                        ) : (
+                                            chat.text
+                                        )}
                                     </div>
                                 </motion.div>
                             ))}
@@ -129,10 +138,10 @@ const Chatbot = () => {
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
                                     placeholder="Type your craving..."
-                                    className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold text-gray-700 placeholder-red-300"
+                                    className="flex-1 bg-transparent border border-red focus:ring-0 text-sm font-bold text-gray-700 placeholder-red-300"
                                 />
-                                <button 
-                                    type="submit" 
+                                <button
+                                    type="submit"
                                     disabled={!message.trim() || isLoading}
                                     className="bg-red-600 text-white p-3.5 rounded-full hover:bg-red-700 transition-all shadow-lg shadow-red-200 active:scale-95 disabled:opacity-50"
                                 >

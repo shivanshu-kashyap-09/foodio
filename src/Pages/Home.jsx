@@ -10,7 +10,9 @@ import HeroRestaurant from '../Components/HeroRestaurant';
 import Banner from '../Components/Banner';
 import Thali from '../Components/Thali';
 import SearchBar from '../Components/SearchBar';
+import Recommendation from '../Components/Recommendation/Recommendation';
 import axios from 'axios';
+
 
 const restaurantData = [
   {
@@ -200,9 +202,9 @@ const restaurantData = [
 
 const Home = () => {
   const [thalis, setThalis] = useState([]);
-  // const [restaurantName, setRestaurantName] = useState([]);
-  // const [restaurantId, setRestaurantId] = useState([]);
-  // const [dish, setDish] = useState([]);
+  const [restaurantName, setRestaurantName] = useState([]);
+  const [restaurantId, setRestaurantId] = useState([]);
+  const [dish, setDish] = useState([]);
   const [vegDish, setVegDish] = useState([]);
   const [nonVegDish, setNonVegDish] = useState([]);
   const [southDish, setSouthDish] = useState([]);
@@ -220,44 +222,44 @@ const Home = () => {
     }
   };
 
-  // const handleHeroRestaurant = async () => {
-  //   try {
-  //     const resVeg = await axios.get(`${import.meta.env.VITE_URL}/vegrestaurant/all`);
-  //     const resNonVeg = await axios.get(`${import.meta.env.VITE_URL}/nonvegrestaurant/all`);
+  const handleHeroRestaurant = async () => {
+    try {
+      const resVeg = await axios.get(`${import.meta.env.VITE_URL}/vegrestaurant/all`);
+      const resNonVeg = await axios.get(`${import.meta.env.VITE_URL}/nonvegrestaurant/all`);
 
-  //     let allIds = [];
-  //     let allNames = [];
+      let allIds = [];
+      let allNames = [];
 
-  //     if (resVeg.status === 200 && Array.isArray(resVeg.data)) {
-  //       allIds = [...resVeg.data.map(r => r.res_id).slice(0, 3)];
-  //       allNames = [...resVeg.data.map(r => r.res_name).slice(0, 3)];
-  //     }
+      if (resVeg.status === 200 && Array.isArray(resVeg.data)) {
+        allIds = [...resVeg.data.map(r => r.res_id).slice(0, 3)];
+        allNames = [...resVeg.data.map(r => r.res_name).slice(0, 3)];
+      }
 
-  //     if (resNonVeg.status === 200 && Array.isArray(resNonVeg.data)) {
-  //       allIds = [...allIds, ...resNonVeg.data.map(r => r.res_id).slice(0, 3)];
-  //       allNames = [...allNames, ...resNonVeg.data.map(r => r.res_name).slice(0, 3)];
-  //     }
+      if (resNonVeg.status === 200 && Array.isArray(resNonVeg.data)) {
+        allIds = [...allIds, ...resNonVeg.data.map(r => r.res_id).slice(0, 3)];
+        allNames = [...allNames, ...resNonVeg.data.map(r => r.res_name).slice(0, 3)];
+      }
 
-  //     setRestaurantId(allIds);
-  //     setRestaurantName(allNames);
+      setRestaurantId(allIds);
+      setRestaurantName(allNames);
 
-  //     // Fetch all 6 dishes in parallel
-  //     const dishRequests = allIds.map((id, index) => {
-  //       const menuType = index < 3 ? 'vegmenu' : 'nonvegmenu';
-  //       return axios.get(`${import.meta.env.VITE_URL}/${menuType}/id/${id}`);
-  //     });
+      // Fetch all 6 dishes in parallel
+      const dishRequests = allIds.map((id, index) => {
+        const menuType = index < 3 ? 'vegmenu' : 'nonvegmenu';
+        return axios.get(`${import.meta.env.VITE_URL}/${menuType}/id/${id}`);
+      });
 
-  //     const dishResponses = await Promise.all(dishRequests);
-  //     const dishes = dishResponses.map(res => res.data.slice(0, 3));
+      const dishResponses = await Promise.all(dishRequests);
+      const dishes = dishResponses.map(res => res.data.slice(0, 3));
 
-  //     // Flatten dish arrays and store in state
-  //     const flatDishes = dishes.flat();
-  //     setDish(flatDishes);
+      // Flatten dish arrays and store in state
+      const flatDishes = dishes.flat();
+      setDish(flatDishes);
 
-  //   } catch (error) {
-  //     console.error("Error fetching hero restaurants:", error);
-  //   }
-  // };
+    } catch (error) {
+      console.error("Error fetching hero restaurants:", error);
+    }
+  };
 
   const handleVeg = async () => {
     try {
@@ -364,6 +366,11 @@ const Home = () => {
       >
         <SearchBar />
       </motion.div>
+
+      <motion.div variants={sectionVariants}>
+        <Recommendation />
+      </motion.div>
+
 
       <motion.div 
         className="h-auto grid grid-cols-1 lg:grid-cols-3 mt-4 mx-15 sm:mx-8 lg:ml-20 gap-4"

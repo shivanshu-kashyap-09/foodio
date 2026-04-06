@@ -1,134 +1,93 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { FaUsers, FaCity, FaRoute, FaChevronDown } from 'react-icons/fa';
 
 const Hero = () => {
-  const fadeInUp = {
-    initial: { opacity: 0, y: 60 },
-    animate: { opacity: 1, y: 0 },
-  };
-
   const statsData = [
     {
       number: "300+",
-      label: "restaurants",
-      icon: "https://b.zmtcdn.com/data/o2_assets/d19ec60986487a77bcb026e5efc3325f1742908200.png",
+      label: "partners",
+      icon: <FaUsers className="text-red-500" />,
     },
     {
       number: "100+",
       label: "cities",
-      icon: "https://b.zmtcdn.com/data/o2_assets/e7533c4081d6140da37b9f430cb7b8051743006192.png",
+      icon: <FaCity className="text-blue-500" />,
     },
     {
-      number: "5000+",
-      label: "orders delivered",
-      icon: "https://b.zmtcdn.com/data/o2_assets/713443cc5944ce4284d7e49e75e2aacf1742466222.png",
+      number: "50k+",
+      label: "delightful orders",
+      icon: <FaRoute className="text-green-500" />,
     },
   ];
 
   return (
-    <motion.section 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1 }}
-      className="relative h-screen flex items-center justify-center text-white w-full"
-    >
-      <motion.video
-        initial={{ scale: 1.2 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 1.5 }}
-        className="absolute top-0 left-0 w-full h-full object-cover"
-        autoPlay
-        loop
-        muted
-        playsInline
-      >
-        <source
-          src="https://b.zmtcdn.com/data/file_assets/2627bbed9d6c068e50d2aadcca11ddbb1743095925.mp4"
-          type="video/mp4"
-          media="(min-width: 768px)"
-        />
-        <source
-          src="https://b.zmtcdn.com/data/file_assets/2627bbed9d6c068e50d2aadcca11ddbb1743095925.mp4"
-          type="video/mp4"
-          media="(max-width: 767px)"
-        />
-      </motion.video>
-
-      <motion.div 
-        className="relative text-center p-4 sm:p-6 md:p-8 rounded-lg max-w-[90%] sm:max-w-[80%] md:max-w-3xl lg:max-w-4xl"
-        variants={fadeInUp}
-        initial="initial"
-        animate="animate"
-        transition={{ duration: 0.8, delay: 0.5 }}
-      >
-        <motion.h2 
-          className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1 }}
+    <section className="relative h-[95vh] sm:h-screen flex items-center justify-center overflow-hidden bg-gray-900">
+      
+      {/* Cinematic Background */}
+      <div className="absolute inset-0 z-0">
+        <motion.video
+          initial={{ scale: 1.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 0.6 }}
+          transition={{ duration: 2 }}
+          className="w-full h-full object-cover"
+          autoPlay
+          loop
+          muted
+          playsInline
         >
-          <motion.span
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 1.2 }}
-          >
-            Your city's flavors,
-          </motion.span>{" "}
-          <br />
-          <motion.span
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 1.4 }}
-          >
-            now just a click away.
-          </motion.span>
-        </motion.h2>
+          <source
+            src="https://b.zmtcdn.com/data/file_assets/2627bbed9d6c068e50d2aadcca11ddbb1743095925.mp4"
+            type="video/mp4"
+          />
+        </motion.video>
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-900/60 via-transparent to-gray-900/40"></div>
+      </div>
 
+      {/* Hero Content */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mt-[-5vh]">
+        <motion.div
+           initial={{ opacity: 0, y: 30 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.8 }}
+        >
+   
+          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white tracking-tighter leading-[0.85] mb-8">
+            CRAVINGS <br /> 
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-400">EVOLVED.</span>
+          </h1>
+          <p className="text-gray-300 text-lg sm:text-xl font-medium max-w-2xl mx-auto mb-12 leading-relaxed">
+            Experience the next generation of food delivery. Powered by AI, delivered by experts, enjoyed by you.
+          </p>
+        </motion.div>
+
+        {/* Floating Stats Bar */}
         <motion.div 
-          className="z-50 bg-white mx-auto flex flex-row sm:flex-row w-fit max-w-screen-lg items-center justify-center gap-4 sm:gap-8 rounded-2xl border px-4 py-3 shadow-lg mt-6 sm:mt-8 md:mt-10 lg:rounded-[32px] lg:px-7 lg:py-6 2xl:gap-12 2xl:mt-14"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.6 }}
-          whileHover={{ scale: 1.02 }}
+          transition={{ delay: 0.5, duration: 0.8 }}
+          className="hidden md:flex bg-white/10 backdrop-blur-2xl border border-white/10 rounded-[3rem] p-2 max-w-4xl mx-auto items-center justify-between shadow-2xl"
         >
           {statsData.map((stat, index) => (
-            <React.Fragment key={stat.label}>
-              <motion.div 
-                className="sm:flex sm:items-center"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 1.8 + index * 0.2 }}
-                whileHover={{ scale: 1.05 }}
-              >
-                <div>
-                  <motion.div 
-                    className="text-2xl font-bold text-gray-800 lg:text-3xl 2xl:text-4xl"
-                    initial={{ scale: 0.5 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.5, delay: 2 + index * 0.2 }}
-                  >
-                    {stat.number}
-                  </motion.div>
-                  <div className="text-gray-600 md:text-base lg:text-lg">
-                    {stat.label}
-                  </div>
+            <React.Fragment key={index}>
+              <div className="flex-1 flex items-center justify-center gap-6 py-6 px-4 hover:bg-white/5 transition-all rounded-[2.5rem] group">
+                <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                  {stat.icon}
                 </div>
-                <motion.img
-                  src={stat.icon}
-                  alt={`${stat.label} icon`}
-                  className="ml-4 max-h-10 lg:max-h-14 2xl:ml-8"
-                  whileHover={{ rotate: 10 }}
-                  whileTap={{ scale: 0.95 }}
-                />
-              </motion.div>
+                <div className="text-left">
+                  <div className="text-2xl font-black text-white leading-none">{stat.number}</div>
+                  <div className="text-[10px] font-black text-red-100 uppercase tracking-widest mt-1 opacity-60">{stat.label}</div>
+                </div>
+              </div>
               {index < statsData.length - 1 && (
-                <div className="hidden sm:block h-9 lg:h-12 xl:h-16 w-px border-l border-gray-300"></div>
+                <div className="h-12 w-px bg-white/10"></div>
               )}
             </React.Fragment>
           ))}
         </motion.div>
-      </motion.div>
-    </motion.section>
+
+      </div>
+    </section>
   );
 };
 

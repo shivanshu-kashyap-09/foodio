@@ -41,8 +41,16 @@ const MyOrders = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen pt-32 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
+            <div className="mt-20 p-6 space-y-4 max-w-4xl mx-auto pt-32">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((_, i) => (
+                    <div key={i} className="animate-pulse flex gap-4 items-center bg-white p-6 rounded-[2.5rem] border border-gray-100">
+                        <div className="w-16 h-16 bg-gray-300 rounded"></div>
+                        <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                ))}
             </div>
         );
     }
