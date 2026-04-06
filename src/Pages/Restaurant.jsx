@@ -1,178 +1,172 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
 import RestaurantCard from "../Components/RestaurantCard";
 import Menu from "../Components/Menu";
 import DishCard from "../Components/DishCard";
-import axios from 'axios';
+
+// ✅ helper to extract data safely
+const extractData = (res) => res?.data?.data || res?.data?.items || [];
 
 const Restaurant = () => {
-  const [vegRes, setVegRes] = useState([]);
-  const [nonVegRes, setNonVegRes] = useState([]);
-  const [southRes, setSouthRes] = useState([]);
-  const [vegMenu, setVegMenu] = useState([]);
-  const [nonVegMenu, setNonVegMenu] = useState([]);
-  const [southMenu, setSouthMenu] = useState([]);
+  const [restaurants, setRestaurants] = useState({
+    veg: [],
+    nonveg: [],
+    south: []
+  });
 
-  const handleVegRes = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/vegrestaurant/all`);
-      if (response.status == 200) {
-        setVegRes(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
+  const [menus, setMenus] = useState({
+    veg: [],
+    nonveg: [],
+    south: []
+  });
 
-  const handleNonVegRes = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/nonvegrestaurant/all`);
-      if (response.status == 200) {
-        setNonVegRes(response.data);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleSouthRes = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/southindianrestaurants/all`);
-      if (response.status == 200) {
-        setSouthRes(response.data);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  const API = import.meta.env.VITE_URL;
 
-  const handleVegResMenu = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/vegmenu/restaurant/${vegRes[2].res_id}`);
-      if (response.status == 200) {
-        setVegMenu(response.data);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  // 🔥 reusable fetch
+  const fetchData = async (endpoint) => {
+    const res = await axios.get(`${API}${endpoint}`);
+    return extractData(res);
+  };
 
-  const handleNonVegMenu = async () => {
+  // 🚀 fetch all restaurants + menus
+  const loadData = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/nonvegmenu/id/${nonVegRes[0].res_id}`);
-      if (response.status == 200) {
-        setNonVegMenu(response.data);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
+      setLoading(true);
 
-  const handleSouthMenu = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/southindianmenu/id/${southRes[0].res_id}`);
-      if(response.status == 200){
-        setSouthMenu(response.data);
-      }
-    } catch (error) {
-      console.error(error);
+      const [
+        vegRes,
+        nonVegRes,
+        southRes,
+        vegMenu,
+        nonVegMenu,
+        southMenu
+      ] = await Promise.all([
+        fetchData('/restaurants/veg'),
+        fetchData('/restaurants/nonveg'),
+        fetchData('/restaurants/southindian'),
+        fetchData('/menus/veg'),
+        fetchData('/menus/nonveg'),
+        fetchData('/menus/southindian')
+      ]);
+
+      setRestaurants({
+        veg: vegRes,
+        nonveg: nonVegRes,
+        south: southRes
+      });
+
+      setMenus({
+        veg: vegMenu,
+        nonveg: nonVegMenu,
+        south: southMenu
+      });
+
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load data");
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    handleVegRes();
-    handleNonVegRes();
-    handleSouthRes();
+    loadData();
   }, []);
 
-  useEffect(() => {
-    if (vegRes.length > 0) {
-      handleVegResMenu();
-    }
-  }, [vegRes]);
+  // 🧠 reusable section component
+  const renderSection = (title, resList, menuList, type) => (
+    <>
+      <h2 className='text-red-900 font-bold text-2xl sm:text-3xl lg:text-4xl text-center mt-8 mb-8'>
+        {title}
+      </h2>
 
-  useEffect(() => {
-    if (nonVegRes.length > 0) {
-      handleNonVegMenu();
-    }
-  }, [nonVegRes]);
+      {/* Restaurants */}
+      <div className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 justify-items-center'>
+        {(resList || []).slice(0, 4).map((res, index) => (
+          <RestaurantCard key={index} restaurant={res} type={type} />
+        ))}
+      </div>
 
-  useEffect(() => {
-    if(southRes.length > 0){
-      handleSouthMenu();
-    }
-  }, [southRes]);
+      {/* Selected Restaurant Name */}
+      {resList.length > 0 && (
+        <h2 className='text-red-900 font-bold text-2xl sm:text-3xl lg:text-4xl text-center mt-8 mb-8'>
+          {resList[0]?.res_name}
+        </h2>
+      )}
+
+      {/* Menu + Dishes */}
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 mx-auto max-w-7xl items-start">
+        <div className='w-full lg:w-1/4 border-2 border-red-700 p-4 bg-white rounded-xl shadow-md'>
+          <h2 className='hidden sm:block text-red-900 font-bold text-xl sm:text-2xl lg:text-3xl text-center border-b-2 bg-red-50 py-2'>
+            MENU
+          </h2>
+          <Menu menu={menuList} />
+        </div>
+
+        <div className="w-full lg:w-3/4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {(menuList || []).map((dish, index) => (
+            <DishCard key={index} {...dish} />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+
+  if (loading) {
+    return (
+      <div className="mt-20 p-6 space-y-4 max-w-7xl mx-auto">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((_, i) => (
+          <div key={i} className="animate-pulse flex gap-4 items-center">
+            <div className="w-16 h-16 bg-gray-300 rounded"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // 🚨 error state
+  if (error) {
+    return (
+      <div className="mt-20 text-center text-red-600 font-semibold">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className='mt-20 mb-4 px-4 sm:px-6 lg:px-8'>
-      <h2 className='text-red-900 font-bold text-2xl sm:text-3xl lg:text-4xl text-center mt-5 mb-8'>VEG RESTAURANT</h2>
-      <div className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 justify-items-center'>
-        {vegRes.slice(0, 4).map((res, index) => (
-          <RestaurantCard key={index} restaurant={res} type='veg'/>
-        ))}
-      </div>
 
-      <h2 className='text-red-900 font-bold text-2xl sm:text-3xl lg:text-4xl text-center mt-8 mb-8'>NONVEG RESTAURANT</h2>
-      <div className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 justify-items-center'>
-        {nonVegRes.slice(0, 4).map((res, index) => (
-          <RestaurantCard key={index} restaurant={res} type='nonveg'/>
-        ))}
-      </div>
-
-      <h2 className='text-red-900 font-bold text-2xl sm:text-3xl lg:text-4xl text-center mt-8 mb-8'>SOUTH INDIAN RESTAURANT</h2>
-      <div className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 justify-items-center'>
-        {southRes.slice(0, 4).map((res, index) => (
-          <RestaurantCard key={index} restaurant={res} type='south'/>
-        ))}
-      </div>
-
-      {vegRes.length > 0 && (
-        <h2 className='text-red-900 font-bold text-2xl sm:text-3xl lg:text-4xl text-center mt-8 mb-8'>
-          {vegRes[0].res_name}
-        </h2>
+      {renderSection(
+        "VEG RESTAURANT",
+        restaurants.veg,
+        menus.veg,
+        "veg"
       )}
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 mx-auto max-w-7xl items-start">
-        <div className='w-full lg:w-1/4 border-2 border-red-700 p-4 bg-white rounded-xl shadow-md'>
-          <h2 className='hidden sm:block text-red-900 font-bold text-xl sm:text-2xl lg:text-3xl text-center border-b-2 bg-red-50 py-2'>MENU</h2>
-          <Menu menu={vegMenu} />
-        </div>
-        <div className="w-full lg:w-3/4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {vegMenu.map((dish, index) => (
-            <DishCard key={index} {...dish} />
-          ))}
-        </div>
-      </div>
 
-      {nonVegRes.length > 0 && (
-        <h2 className='text-red-900 font-bold text-2xl sm:text-3xl lg:text-4xl text-center mt-8 mb-8'>{nonVegRes[0].res_name}</h2>
+      {renderSection(
+        "NONVEG RESTAURANT",
+        restaurants.nonveg,
+        menus.nonveg,
+        "nonveg"
       )}
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 mx-auto max-w-7xl items-start">
-        <div className='w-full lg:w-1/4 border-2 border-red-700 p-4 bg-white rounded-xl shadow-md'>
-          <h2 className='hidden sm:block text-red-900 font-bold text-xl sm:text-2xl lg:text-3xl text-center border-b-2 bg-red-50 py-2'>MENU</h2>
-          <Menu menu={nonVegMenu} />
-        </div>
-        <div className="w-full lg:w-3/4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {nonVegMenu.map((dish, index) => (
-            <DishCard key={index} {...dish} />
-          ))}
-        </div>
-      </div>
 
-      {southRes.length > 0 && (
-        <h2 className='text-red-900 font-bold text-2xl sm:text-3xl lg:text-4xl text-center mt-8 mb-8'>{southRes[0].res_name}</h2>
+      {renderSection(
+        "SOUTH INDIAN RESTAURANT",
+        restaurants.south,
+        menus.south,
+        "south"
       )}
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 mx-auto max-w-7xl items-start">
-        <div className='w-full lg:w-1/4 border-2 border-red-700 p-4 bg-white rounded-xl shadow-md'>
-          <h2 className='hidden sm:block text-red-900 font-bold text-xl sm:text-2xl lg:text-3xl text-center border-b-2 bg-red-50 py-2'>MENU</h2>
-          <Menu menu={southMenu} />
-        </div>
-        <div className="w-full lg:w-3/4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {southMenu.map((dish, index) => (
-            <DishCard key={index} {...dish} />
-          ))}
-        </div>
-      </div>
+
     </div>
-  )
-}
+  );
+};
 
-export default Restaurant
+export default Restaurant;

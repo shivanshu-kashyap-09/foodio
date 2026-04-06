@@ -13,9 +13,10 @@ const RestaurantById = () => {
 
     const handleResMenu = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_URL}/${type}menu/id/${res_id}`);
+            // Using search filter for restaurant specific dishes
+            const response = await axios.get(`${import.meta.env.VITE_URL}/search/filter?restaurantId=${res_id}&cuisineTypes=${type}`);
             if (response.status === 200) {
-                setMenu(response.data);
+                setMenu(response.data.data);
             }
         } catch (error) {
             console.error("Error fetching menu:", error);
@@ -24,9 +25,9 @@ const RestaurantById = () => {
 
     const handleDishesById = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_URL}/${type}menu/restaurant/${res_id}`);
+            const response = await axios.get(`${import.meta.env.VITE_URL}/search/filter?restaurantId=${res_id}&cuisineTypes=${type}`);
             if (response.status === 200) {
-                setDishes(response.data);
+                setDishes(response.data.data);
             }
         } catch (error) {
             console.error("Error fetching dish:", error);
@@ -35,9 +36,9 @@ const RestaurantById = () => {
 
     const handleAllRestaurantsByType = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_URL}/${type}restaurant/all`);
+            const response = await axios.get(`${import.meta.env.VITE_URL}/restaurants/${type}`);
             if (response.status === 200) {
-                setAllRestaurants(response.data);
+                setAllRestaurants(response.data.data);
             }
         } catch (error) {
             console.error("Error fetching all restaurants:", error);

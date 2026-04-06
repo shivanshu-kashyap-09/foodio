@@ -16,15 +16,39 @@ import Forget from './Pages/Forget';
 import Profile from './Pages/Profile';
 import ThaliDesc from './Pages/ThaliDesc';
 import RestaurantById from './Pages/RestaurantById';
+import OrderTracking from './Pages/OrderTracking';
+import MyOrders from './Pages/MyOrders';
+import SearchResults from './Pages/SearchResults';
+import AdminDashboard from './Pages/Admin/AdminDashboard';
+import DeliveryDashboard from './Pages/Delivery/DeliveryDashboard';
+import RestaurantDashboard from './Pages/Restaurant/RestaurantDashboard';
+import AIChatbot from './Components/AIChatbot/AIChatbot';
 import { ToastContainer } from 'react-toastify';
+
 import 'react-toastify/dist/ReactToastify.css';
 
 const App = () => {
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_URL}/ping`)
-      .then(() => console.log("Backend is awake"))
-      .catch(() => console.warn("Could not wake backend"));
+    // Add a request interceptor
+    const requestInterceptor = axios.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Clean up interceptor on unmount
+    return () => {
+      axios.interceptors.request.eject(requestInterceptor);
+    };
   }, []);
+
   return (
     <Router>
       <Routes>
@@ -43,9 +67,17 @@ const App = () => {
           <Route path='/profile' element={<Profile />} />
           <Route path='/thali/description/:thali_id' element={<ThaliDesc/>} />
           <Route path='/restaurant/:type/:res_name/:res_id' element={<RestaurantById/>} />
+          <Route path='/order/tracking/:orderId' element={<OrderTracking />} />
+          <Route path='/orders' element={<MyOrders />} />
+          <Route path='/search' element={<SearchResults />} />
+          <Route path='/admin' element={<AdminDashboard />} />
+          <Route path='/delivery' element={<DeliveryDashboard />} />
+          <Route path='/restaurant/dashboard' element={<RestaurantDashboard />} />
         </Route>
       </Routes>
+      {/* <AIChatbot /> */}
       <ToastContainer position="top-right" autoClose={3000} />
+
     </Router>
   );
 }
