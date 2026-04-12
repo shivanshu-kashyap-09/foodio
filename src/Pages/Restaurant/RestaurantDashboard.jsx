@@ -39,25 +39,38 @@ const RestaurantDashboard = () => {
     const user = JSON.parse(localStorage.getItem('user'));
 
     const [analytics, setAnalytics] = useState([]);
+    const [trendingDishes, setTrendingDishes] = useState([]);
+    const [orderTrends, setOrderTrends] = useState([]);
+
+    const [aiInsights, setAiInsights] = useState([]);
 
     useEffect(() => {
         fetchAllData();
-    }, [dishType]);
+    }, [dishType, activeTab]);
 
     const fetchAllData = async () => {
         setLoading(true);
         try {
-            const [summaryRes, ordersRes, dishesRes, analyticsRes] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/summary`),
-                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/orders`),
-                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/dishes/${dishType}`),
-                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/analytics`)
+            const config = {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            };
+            const [summaryRes, ordersRes, dishesRes, analyticsRes, trendingRes, trendsRes, aiRes] = await Promise.all([
+                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/summary`, config),
+                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/orders`, config),
+                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/dishes/${dishType}`, config),
+                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/analytics`, config),
+                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/trending`, config),
+                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/trends`, config),
+                axios.get(`${import.meta.env.VITE_URL.replace('/user', '')}/ai/insights`, config)
             ]);
 
             if (summaryRes.data.success) setSummary(summaryRes.data.data);
             if (ordersRes.data.success) setOrders(ordersRes.data.data);
             if (dishesRes.data.success) setDishes(dishesRes.data.data);
             if (analyticsRes.data.success) setAnalytics(analyticsRes.data.data);
+            if (trendingRes.data.success) setTrendingDishes(trendingRes.data.data);
+            if (trendsRes.data.success) setOrderTrends(trendsRes.data.data);
+            if (aiRes.data.success) setAiInsights(aiRes.data.data);
         } catch (error) {
             console.error('Dashboard Error:', error);
             toast.error("Failed to load dashboard data");
@@ -71,6 +84,8 @@ const RestaurantDashboard = () => {
             const res = await axios.put(`${import.meta.env.VITE_URL}/restaurant/dashboard/order-status`, {
                 orderId,
                 status: newStatus
+            }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
             if (res.data.success) {
                 toast.success(`Order marked as ${newStatus}`);
@@ -87,6 +102,8 @@ const RestaurantDashboard = () => {
             const res = await axios.post(`${import.meta.env.VITE_URL}/restaurant/dashboard/add-dish`, {
                 ...newDish,
                 type: dishType
+            }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
             if (res.data.success) {
                 toast.success("Dish added to menu!");
@@ -101,30 +118,42 @@ const RestaurantDashboard = () => {
 
     // Chart Data
     const revenueData = {
-        labels: analytics.length > 0 
-           ? analytics.map(a => new Date(a.date).toLocaleDateString('en-US', { weekday: 'short' })) 
-           : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        labels: analytics && analytics.length > 0 
+           ? analytics.map(a => {
+               const d = new Date(a.date);
+               return d.toLocaleDateString('en-US', { weekday: 'short' });
+           }) 
+           : ['No Data'],
         datasets: [{
             fill: true,
             label: 'Daily Earnings (₹)',
-            data: analytics.length > 0 
+            data: analytics && analytics.length > 0 
                ? analytics.map(a => a.earnings) 
-               : [4500, 5200, 4800, 7000, 8500, 12000, 15000],
+               : [0],
             borderColor: '#ef4444',
             backgroundColor: 'rgba(239, 68, 68, 0.1)',
             tension: 0.4,
+            pointBackgroundColor: '#ef4444',
+            pointBorderColor: '#fff',
+            pointHoverRadius: 6,
         }]
     };
 
     const ordersTrendData = {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        labels: orderTrends && orderTrends.length > 0 
+            ? orderTrends.map(t => t.month) 
+            : ['No Data'],
         datasets: [{
             label: 'Orders Count',
-            data: [20, 25, 22, 35, 45, 60, 75],
+            data: orderTrends && orderTrends.length > 0 
+                ? orderTrends.map(t => t.count) 
+                : [0],
             backgroundColor: '#3b82f6',
             borderRadius: 10,
+            barThickness: 20
         }]
     };
+
 
     if (loading && activeTab === 'overview') {
         return (
@@ -194,10 +223,10 @@ const RestaurantDashboard = () => {
                             {/* Summary Stats */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {[
-                                    { label: 'Total Earnings', value: `₹${summary?.earnings || 0}`, icon: <FaChartLine />, color: 'bg-green-50 text-green-600', trend: '+15%' },
-                                    { label: 'Total Orders', value: summary?.orders || 0, icon: <FaShoppingBag />, color: 'bg-blue-50 text-blue-600', trend: '+8%' },
-                                    { label: 'Total Customers', value: summary?.customers || 0, icon: <FaUsers />, color: 'bg-orange-50 text-orange-600', trend: 'Healthy' },
-                                    { label: 'Avg Rating', value: summary?.avg_rating || '0.0', icon: <FaStar />, color: 'bg-yellow-50 text-yellow-600', trend: 'Global' }
+                                    { label: 'Total Earnings', value: `₹${summary?.earnings || 0}`, icon: <FaChartLine />, color: 'bg-green-50 text-green-600', trend: summary?.earnings > 0 ? 'Live' : 'No Data' },
+                                    { label: 'Total Orders', value: summary?.orders || 0, icon: <FaShoppingBag />, color: 'bg-blue-50 text-blue-600', trend: summary?.orders > 0 ? 'Tracked' : 'Empty' },
+                                    { label: 'Total Customers', value: summary?.customers || 0, icon: <FaUsers />, color: 'bg-orange-50 text-orange-600', trend: summary?.customers > 0 ? 'Active' : 'N/A' },
+                                    { label: 'Avg Rating', value: summary?.avg_rating || '0.0', icon: <FaStar />, color: 'bg-yellow-50 text-yellow-600', trend: 'Service' }
                                 ].map((stat, i) => (
                                     <div key={i} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 group hover:border-red-200 transition-all">
                                         <div className={`w-12 h-12 rounded-2xl ${stat.color} flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform`}>
@@ -206,8 +235,8 @@ const RestaurantDashboard = () => {
                                         <p className="text-gray-400 text-xs font-black uppercase tracking-widest mb-1">{stat.label}</p>
                                         <div className="flex items-end gap-2">
                                             <h3 className="text-2xl font-black text-gray-800">{stat.value}</h3>
-                                            <span className="text-[10px] font-bold text-green-500 mb-1 flex items-center italic">
-                                                <FaArrowUp className="text-[8px] mr-1" /> {stat.trend}
+                                            <span className={`text-[10px] font-bold ${stat.trend === 'No Data' || stat.trend === 'Empty' ? 'text-gray-400' : 'text-green-500'} mb-1 flex items-center italic`}>
+                                                {stat.trend !== 'No Data' && <FaArrowUp className="text-[8px] mr-1" />} {stat.trend}
                                             </span>
                                         </div>
                                     </div>
@@ -241,17 +270,17 @@ const RestaurantDashboard = () => {
                             <section className="bg-white p-8 rounded-[3rem] shadow-sm border border-gray-100">
                                 <h3 className="text-xl font-black text-gray-800 tracking-tight mb-6 uppercase">Trending This Week</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {[
-                                        { name: 'Paneer Masala', orders: 124, growth: '+24%', img: 'https://b.zmtcdn.com/data/dish_photos/511/87823f990adaba9876778643806a1511.jpg' },
-                                        { name: 'Classic Burger', orders: 98, growth: '+12%', img: 'https://b.zmtcdn.com/data/dish_photos/e07/d0e57e93b137e0984920409051052e07.jpg' },
-                                        { name: 'Masala Dosa', orders: 86, growth: '+5%', img: 'https://b.zmtcdn.com/data/dish_photos/0c5/6af9c22ac7b40de19dda8995b96680c5.jpg' }
-                                    ].map((dish, i) => (
+                                    {(trendingDishes.length > 0 ? trendingDishes : [
+                                        { dish_name: 'Paneer Masala', orders: 124, growth: '+24%', dish_image: 'https://b.zmtcdn.com/data/dish_photos/511/87823f990adaba9876778643806a1511.jpg' },
+                                        { dish_name: 'Classic Burger', orders: 98, growth: '+12%', dish_image: 'https://b.zmtcdn.com/data/dish_photos/e07/d0e57e93b137e0984920409051052e07.jpg' },
+                                        { dish_name: 'Masala Dosa', orders: 86, growth: '+5%', dish_image: 'https://b.zmtcdn.com/data/dish_photos/0c5/6af9c22ac7b40de19dda8995b96680c5.jpg' }
+                                    ]).map((dish, i) => (
                                         <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-3xl hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-red-100">
-                                            <img src={dish.img} className="w-16 h-16 rounded-2xl object-cover shadow-md" alt="" />
+                                            <img src={dish.dish_image} className="w-16 h-16 rounded-2xl object-cover shadow-md" alt="" />
                                             <div>
-                                                <h4 className="font-black text-gray-800 uppercase text-xs">{dish.name}</h4>
-                                                <p className="text-[10px] font-bold text-gray-400">{dish.orders} Orders</p>
-                                                <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">{dish.growth} Growth</span>
+                                                <h4 className="font-black text-gray-800 uppercase text-xs">{dish.dish_name}</h4>
+                                                <p className="text-[10px] font-bold text-gray-400">{dish.orders} Sales</p>
+                                                <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">{dish.dish_rating} ⭐ Rating</span>
                                             </div>
                                         </div>
                                     ))}
@@ -425,12 +454,12 @@ const RestaurantDashboard = () => {
                                         </h2>
                                         
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            {[
-                                                { title: 'Dynamic Pricing', text: 'Reduce "Classic Burger" price by ₹20 during 4-6 PM to boost sales by 45%.', action: 'Apply Now' },
-                                                { title: 'Inventory Alert', text: 'Tomato stock running low. Market price up 15% tomorrow. Order today.', action: 'Order Stock' },
-                                                { title: 'Combo Strategy', text: 'Customers who buy "Masala Dosa" also like "Filter Coffee". Create a combo.', action: 'Create Combo' },
-                                                { title: 'Campaign Alert', text: 'Toursim peak this Sat-Sun. Run a "Weekend Feast" 10% off promotion.', action: 'Run Promo' }
-                                            ].map((insight, idx) => (
+                                            {(aiInsights && aiInsights.length > 0 ? aiInsights : [
+                                                { title: 'AI Warming Up', text: 'Place more orders to get deep data-driven insights.', action: 'Refresh' },
+                                                { title: 'Inventory Alert', text: 'AI is monitoring your stock levels in real-time.', action: 'View Stock' },
+                                                { title: 'Combo Strategy', text: 'Discover which dishes sell better together.', action: 'Create Combo' },
+                                                { title: 'Price Optimization', text: 'Real-time price suggestions will appear here.', action: 'Check Prices' }
+                                            ]).map((insight, idx) => (
                                                 <div key={idx} className="bg-white/5 backdrop-blur p-6 rounded-[2rem] border border-white/10 group hover:bg-white/10 transition-all">
                                                     <h4 className="text-red-500 text-xs font-black uppercase tracking-widest mb-3">{insight.title}</h4>
                                                     <p className="text-gray-400 text-xs font-bold leading-relaxed mb-6">{insight.text}</p>
@@ -440,22 +469,25 @@ const RestaurantDashboard = () => {
                                                 </div>
                                             ))}
                                         </div>
+
                                     </div>
                                 </div>
 
                                 {/* Customer Sentiment Analysis */}
                                 <div className="bg-white p-8 rounded-[3rem] shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8 items-center">
-                                    <div className="w-48 h-48 bg-gray-50 rounded-full border-[12px] border-green-500 flex items-center justify-center relative">
+                                    <div className={`w-48 h-48 bg-gray-50 rounded-full border-[12px] ${summary?.avg_rating >= 4 ? 'border-green-500' : 'border-yellow-500'} flex items-center justify-center relative`}>
                                         <div className="text-center">
-                                            <p className="text-3xl font-black text-gray-800 tracking-tighter leading-none">92%</p>
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Positive</p>
+                                            <p className="text-3xl font-black text-gray-800 tracking-tighter leading-none">{(parseFloat(summary?.avg_rating || 0) * 20).toFixed(0)}%</p>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Satisfaction</p>
                                         </div>
                                     </div>
                                     <div className="flex-1 text-center md:text-left">
                                         <h3 className="text-xl font-black text-gray-800 uppercase mb-4">Sentiment Analysis</h3>
                                         <p className="text-sm font-bold text-gray-500 leading-relaxed max-w-sm mb-6">
-                                            Our AI scanned 1,200+ reviews. Customers love your <span className="text-red-500">spices</span> and <span className="text-red-500">packaging</span>. 
-                                            Suggestion: Improve delivery speed for "South Indian" menu items.
+                                            Our AI scanned your menu ratings. Your average rating is <span className="text-red-500">{summary?.avg_rating || '0.0'} stars</span>. 
+                                            {summary?.avg_rating >= 4 
+                                                ? " Customers love your consistency! Suggestion: Keep your top items fresh." 
+                                                : " Suggestion: Improve dish variety or descriptions to boost ratings."}
                                         </p>
                                         <div className="flex gap-2 justify-center md:justify-start">
                                             {['Fresh', 'Fast', 'Hot', 'Tasty'].map(tag => (
@@ -464,6 +496,7 @@ const RestaurantDashboard = () => {
                                         </div>
                                     </div>
                                 </div>
+
                             </section>
 
                             {/* Predictive Customer Base */}

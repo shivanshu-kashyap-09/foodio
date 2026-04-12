@@ -9,18 +9,24 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarEle
 const AdminDashboard = () => {
     const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalUsers: 0, activeUsers: 0 });
     const [pendingRestaurants, setPendingRestaurants] = useState([]);
+    const [revenueTimeline, setRevenueTimeline] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchAdminData = async () => {
             try {
-                const [statsRes, pendingRes] = await Promise.all([
-                    axios.get('/api/admin/stats'),
-                    axios.get('/api/admin/pending-restaurants')
+                const config = {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                };
+                const [statsRes, pendingRes, revenueRes] = await Promise.all([
+                    axios.get('/api/admin/stats', config),
+                    axios.get('/api/admin/pending-restaurants', config),
+                    axios.get('/api/admin/revenue', config)
                 ]);
 
                 if (statsRes.data.success) setStats(statsRes.data.data);
                 if (pendingRes.data.success) setPendingRestaurants(pendingRes.data.data);
+                if (revenueRes.data.success) setRevenueTimeline(revenueRes.data.data);
                 
                 setLoading(false);
             } catch (error) {
@@ -34,7 +40,9 @@ const AdminDashboard = () => {
 
     const handleApprove = async (type, id, status) => {
         try {
-            const res = await axios.post('/api/admin/approve-restaurant', { type, id, status });
+            const res = await axios.post('/api/admin/approve-restaurant', { type, id, status }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
             if (res.data.success) {
                 setPendingRestaurants(prev => prev.filter(r => r.res_id !== id));
             }
@@ -44,10 +52,10 @@ const AdminDashboard = () => {
     };
 
     const revenueData = {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        labels: revenueTimeline.length > 0 ? revenueTimeline.map(r => r.month) : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
         datasets: [{
             label: 'Monthly Revenue (₹)',
-            data: [12000, 19000, 30000, 50000, 25000, 60000], 
+            data: revenueTimeline.length > 0 ? revenueTimeline.map(r => r.revenue) : [12000, 19000, 30000, 50000, 25000, 60000], 
             backgroundColor: 'rgba(255, 71, 87, 0.7)',
             borderRadius: 8
         }]
