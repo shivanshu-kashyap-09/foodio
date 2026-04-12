@@ -33,6 +33,9 @@ const Cart = () => {
   const [phoneNumber, setPhoneNumber] = useState(USER?.user_phone || "");
   const [specialInstruction, setSpecialInstruction] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [deliveryCharge, setDeliveryCharge] = useState(50); // State for dynamic delivery fee
+  const [borzoOrderDetails, setBorzoOrderDetails] = useState(null);
+  const [isCalculatingDelivery, setIsCalculatingDelivery] = useState(false);
 
 
   // 🔥 map menu type → API
@@ -141,14 +144,59 @@ const Cart = () => {
     0
   );
 
-  const delivery = 50;
+  // const delivery = 50;
   const gst = itemTotal * 0.05;
-  const total = itemTotal + delivery + gst;
+  const total = itemTotal + deliveryCharge + gst;
   const navigate = useNavigate();
 
   const handleOrder = async () => {
-    // 🔥 Open Checkout Modal instead of placing immediately
+    // 🔥 Calculate Borzo Delivery Price before opening modal
+    if (deliveryAddress && cartItems.length > 0) {
+      await calculateBorzoDelivery();
+    }
     setShowCheckoutModal(true);
+  };
+
+  const calculateBorzoDelivery = async () => {
+    try {
+      setIsCalculatingDelivery(true);
+      const restaurantId = cartItems[0]?.restaurant_id;
+      const restaurantType = cartItems[0]?.dish_type;
+      
+      // 1. Get Restaurant Address
+      const restRes = await axios.get(`${API}/restaurants/${restaurantType}/${restaurantId}`);
+      const restaurant = restRes.data.data;
+
+      // 2. Call Borzo Calculate API
+      const borzoRes = await axios.post(`${API}/delivery/borzo/calculate`, {
+        points: [
+          {
+            address: restaurant.location || restaurant.restaurant_address,
+            phone: restaurant.phone || restaurant.restaurant_phone,
+            name: restaurant.name || restaurant.restaurant_name
+          },
+          {
+            address: deliveryAddress,
+            phone: phoneNumber,
+            name: USER?.user_name
+          }
+        ]
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      if (borzoRes.data.success) {
+        const fee = parseFloat(borzoRes.data.data.delivery_fee_amount);
+        setDeliveryCharge(fee > 0 ? fee : 50);
+        setBorzoOrderDetails(borzoRes.data.data);
+      }
+    } catch (err) {
+      console.error("Borzo Calculation Error:", err);
+      // Fallback to default
+      setDeliveryCharge(50);
+    } finally {
+      setIsCalculatingDelivery(false);
+    }
   };
 
   const confirmOrder = async () => {
@@ -160,62 +208,84 @@ const Cart = () => {
     }
   };
 
-const handleOnlinePayment = async () => {
-  const loaded = await loadRazorpay();
-
-  if (!loaded) {
-    toast.error("Razorpay SDK failed");
-    return;
-  }
-
-  try {
-    // 🔥 create order
-    const orderRes = await axios.post(`${API}/razorpay/create-order`, {
-      amount: total,
-      currency: "INR"
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
     });
+  };
 
-    const order = orderRes.data;
+  const handleOnlinePayment = async () => {
+    const loaded = await loadRazorpay();
 
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: order.amount,
-      currency: order.currency,
-      name: "Foodio",
-      description: "Food Payment",
-      order_id: order.id,
+    if (!loaded) {
+      toast.error("Razorpay SDK failed to load. Check your connection.");
+      return;
+    }
 
-      handler: async (response) => {
-        // 🔥 verify payment
-        const verifyRes = await axios.post(
-          `${API}/razorpay/verify-payment`,
-          response
-        );
-
-        if (verifyRes.data.success) {
-          toast.success("Payment successful 🎉");
-
-          // 🔥 now place order
-          await placeOrderAPI("upi");
-
-        } else {
-          toast.error("Payment verification failed");
+    try {
+      // 1. Create order on backend
+      const { data: { data: order, keyId } } = await axios.post(`${API}/razorpay/create-order`, {
+        amount: total,
+        currency: "INR",
+        notes: {
+          user_id: USER_ID,
+          items_count: cartItems.length
         }
-      },
+      });
 
-      theme: {
-        color: "#dc2626"
-      }
-    };
+      const options = {
+        key: keyId,
+        amount: order.amount,
+        currency: order.currency,
+        name: "FOODIO",
+        description: "Payment for your delicious meal",
+        image: "https://cdn-icons-png.flaticon.com/512/3595/3595455.png",
+        order_id: order.id,
+        handler: async (response) => {
+          try {
+            // 2. Verify payment on backend
+            const verifyRes = await axios.post(`${API}/razorpay/verify-payment`, response);
 
-    const rzp = new window.Razorpay(options);
-    rzp.open();
+            if (verifyRes.data.success) {
+              toast.success("Payment successful! 🎉");
+              // 3. Place actual order in DB
+              await placeOrderAPI("online");
+            } else {
+              toast.error("Payment verification failed. Contact support.");
+            }
+          } catch (err) {
+            console.error("Verification error:", err);
+            toast.error("Error verifying payment.");
+          }
+        },
+        prefill: {
+          name: USER?.user_name || "",
+          email: USER?.user_gmail || "",
+          contact: phoneNumber || ""
+        },
+        theme: {
+          color: "#dc2626",
+        },
+        modal: {
+          ondismiss: () => {
+            toast.info("Payment cancelled.");
+          }
+        }
+      };
 
-  } catch (err) {
-    console.error(err);
-    toast.error("Payment failed");
-  }
-};
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
+    } catch (err) {
+      console.error("Payment initialization error:", err);
+      const msg = err.response?.data?.message || "Could not initialize payment.";
+      toast.error(msg);
+    }
+  };
 
 const placeOrderAPI = async (paymentType) => {
   try {
@@ -251,6 +321,38 @@ const placeOrderAPI = async (paymentType) => {
         const orderId = res.data.data.orderId || res.data.data.id;
         
         toast.success("Order placed successfully 🎉");
+
+        // 🚀 Create Borzo Delivery Order
+        try {
+          const restaurantId = cartItems[0]?.restaurant_id;
+          const restaurantType = cartItems[0]?.dish_type;
+          const restRes = await axios.get(`${API}/restaurants/${restaurantType}/${restaurantId}`);
+          const restaurant = restRes.data.data;
+
+          await axios.post(`${API}/delivery/borzo/create`, {
+            orderData: {
+              matter: `Order #FD-${orderId} - Foodio Delivery`,
+              points: [
+                {
+                  address: restaurant.location || restaurant.restaurant_address,
+                  contact_person: { phone: restaurant.phone || restaurant.restaurant_phone, name: restaurant.name || restaurant.restaurant_name },
+                  note: "Pick up the food from the counter."
+                },
+                {
+                  address: deliveryAddress,
+                  contact_person: { phone: phoneNumber, name: USER?.user_name },
+                  note: specialInstruction
+                }
+              ]
+            }
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          toast.info("Delivery partner assigned 🚚");
+        } catch (borzoError) {
+          console.error("Borzo Order Creation Error:", borzoError);
+          toast.warning("Manual delivery assignment may be needed.");
+        }
 
         // 🔥 clear cart
         try {
@@ -451,8 +553,8 @@ const placeOrderAPI = async (paymentType) => {
                         <span>₹{itemTotal.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-sm text-orange-900/70 font-bold">
-                        <span>Delivery & Taxes</span>
-                        <span>₹{(delivery + gst).toFixed(2)}</span>
+                        <span>Delivery {isCalculatingDelivery ? '(Calculating...)' : '(Borzo)'}</span>
+                        <span>₹{deliveryCharge.toFixed(2)}</span>
                       </div>
                       <div className="pt-3 mt-3 border-t border-orange-200/50 flex justify-between text-lg text-orange-900 font-black">
                         <span>To Pay</span>

@@ -5,18 +5,25 @@ import { motion } from 'framer-motion';
 const DeliveryDashboard = () => {
     const [orders, setOrders] = useState([]);
     const [assignedOrders, setAssignedOrders] = useState([]);
+    const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const user = JSON.parse(localStorage.getItem('user'));
 
     useEffect(() => {
         const fetchDeliveryData = async () => {
             try {
-                const [pendingRes, assignedRes] = await Promise.all([
-                    axios.get('/api/delivery/pending-orders'),
-                    axios.get('/api/delivery/assigned-orders')
+                const config = {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                };
+                const [pendingRes, assignedRes, statsRes] = await Promise.all([
+                    axios.get('/api/delivery/pending-orders', config),
+                    axios.get('/api/delivery/assigned-orders', config),
+                    axios.get('/api/delivery/stats', config)
                 ]);
 
                 if (pendingRes.data.success) setOrders(pendingRes.data.data);
                 if (assignedRes.data.success) setAssignedOrders(assignedRes.data.data);
+                if (statsRes.data.success) setStats(statsRes.data.data);
                 
                 setLoading(false);
             } catch (error) {
@@ -30,7 +37,9 @@ const DeliveryDashboard = () => {
 
     const handleAccept = async (orderId) => {
         try {
-            const res = await axios.post('/api/delivery/accept-order', { orderId });
+            const res = await axios.post('/api/delivery/accept-order', { orderId }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
             if (res.data.success) {
                 setOrders(prev => prev.filter(o => o.order_id !== orderId));
                 setAssignedOrders(prev => [...prev, { order_id: orderId, delivery_status: 'Accepted' }]);
@@ -42,7 +51,9 @@ const DeliveryDashboard = () => {
 
     const handleUpdateStatus = async (orderId, status) => {
         try {
-            const res = await axios.put('/api/delivery/order-status', { orderId, status });
+            const res = await axios.put('/api/delivery/order-status', { orderId, status }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
             if (res.data.success) {
                 setAssignedOrders(prev => prev.map(o => o.order_id === orderId ? { ...o, delivery_status: status } : o));
             }
@@ -77,10 +88,10 @@ const DeliveryDashboard = () => {
                     </h1>
                     <div className="flex items-center gap-4">
                         <div className="text-right">
-                            <span className="block text-sm font-semibold text-gray-800">Shivanshu Kashyap</span>
-                            <span className="block text-xs text-green-500 font-bold uppercase tracking-widest">Platinum Partner</span>
+                            <span className="block text-sm font-semibold text-gray-800">{user?.user_name || "Delivery Partner"}</span>
+                            <span className="block text-xs text-green-500 font-bold uppercase tracking-widest">{stats?.vehicle_type || "Partner"} | ₹{stats?.totalEarnings?.toFixed(2) || "0.00"}</span>
                         </div>
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=delivery" alt="" className="w-12 h-12 rounded-full border-2 border-blue-100 shadow-inner bg-gray-50 p-1" />
+                        <img src={user?.user_image || "https://api.dicebear.com/7.x/avataaars/svg?seed=delivery"} alt="" className="w-12 h-12 rounded-full border-2 border-blue-100 shadow-inner bg-gray-50 p-1" />
                     </div>
                 </header>
 

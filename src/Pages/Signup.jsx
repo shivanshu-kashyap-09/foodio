@@ -376,7 +376,7 @@ const Signup = () => {
 
                         <motion.a
                             variants={itemVariants}
-                            href={`${import.meta.env.VITE_URL}/auth/googleoauth2`}
+                            href={`${import.meta.env.VITE_URL}/user/googleoauth2`}
                             className="w-full inline-flex items-center justify-center gap-3 py-3 border-2 border-gray-50 rounded-2xl hover:bg-gray-50 transition-colors text-sm font-bold text-gray-600"
                         >
                             <img
