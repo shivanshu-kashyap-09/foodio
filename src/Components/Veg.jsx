@@ -6,7 +6,6 @@ import Filter from '../Components/Filter';
 import axios from 'axios';
 
 const Veg = ({ vegDish }) => {
-  console.log(vegDish);
   const [filter, setFilter] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

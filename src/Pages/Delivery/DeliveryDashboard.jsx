@@ -1,29 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { io } from 'socket.io-client';
 
 const DeliveryDashboard = () => {
     const [orders, setOrders] = useState([]);
     const [assignedOrders, setAssignedOrders] = useState([]);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isOnline, setIsOnline] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+    const [socket, setSocket] = useState(null);
+    
     const user = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
 
     useEffect(() => {
         const fetchDeliveryData = async () => {
             try {
                 const config = {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                    headers: { Authorization: `Bearer ${token}` }
                 };
                 const [pendingRes, assignedRes, statsRes] = await Promise.all([
-                    axios.get('/api/delivery/pending-orders', config),
-                    axios.get('/api/delivery/assigned-orders', config),
-                    axios.get('/api/delivery/stats', config)
+                    axios.get(`${import.meta.env.VITE_URL}/delivery/pending-orders`, config),
+                    axios.get(`${import.meta.env.VITE_URL}/delivery/assigned-orders`, config),
+                    axios.get(`${import.meta.env.VITE_URL}/delivery/stats`, config)
                 ]);
 
                 if (pendingRes.data.success) setOrders(pendingRes.data.data);
                 if (assignedRes.data.success) setAssignedOrders(assignedRes.data.data);
-                if (statsRes.data.success) setStats(statsRes.data.data);
+                if (statsRes.data.success && statsRes.data.data) {
+                    setStats(statsRes.data.data);
+                    setIsOnline(statsRes.data.data.status === 'available');
+                }
                 
                 setLoading(false);
             } catch (error) {
@@ -33,29 +42,89 @@ const DeliveryDashboard = () => {
         };
 
         fetchDeliveryData();
-    }, []);
+
+        // Socket integration
+        const newSocket = io('http://localhost:5000', {
+            auth: { token, userId: user?.user_id }
+        });
+
+        newSocket.on('notification:new', (notification) => {
+            if (notification.type === 'order.new_available') {
+                setNotifications(prev => [notification, ...prev]);
+                // Automatically add to pool if not already there
+                setOrders(prev => {
+                    if (prev.find(o => o.order_id === notification.orderId)) return prev;
+                    return [
+                        { 
+                            order_id: notification.orderId, 
+                            total_amount: notification.total, 
+                            delivery_charges: notification.charges,
+                            city: notification.city
+                        }, 
+                        ...prev
+                    ];
+                });
+            }
+        });
+
+        setSocket(newSocket);
+
+        return () => newSocket.close();
+    }, [token, user?.user_id]);
+
+    const handleToggleStatus = async () => {
+        try {
+            const nextStatus = isOnline ? 'offline' : 'available';
+            const res = await axios.put(`${import.meta.env.VITE_URL}/delivery/toggle-status`, { status: nextStatus }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                setIsOnline(!isOnline);
+            }
+        } catch (error) {
+            console.error('Failed to toggle status:', error);
+        }
+    };
 
     const handleAccept = async (orderId) => {
+        if (!isOnline) {
+            alert("Go online first to accept orders!");
+            return;
+        }
         try {
-            const res = await axios.post('/api/delivery/accept-order', { orderId }, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            const res = await axios.post(`${import.meta.env.VITE_URL}/delivery/accept-order`, { orderId }, {
+                headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
                 setOrders(prev => prev.filter(o => o.order_id !== orderId));
-                setAssignedOrders(prev => [...prev, { order_id: orderId, delivery_status: 'Accepted' }]);
+                // Refetch assigned orders
+                const assignedRes = await axios.get(`${import.meta.env.VITE_URL}/delivery/assigned-orders`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (assignedRes.data.success) setAssignedOrders(assignedRes.data.data);
+                
+                // Clear notification
+                setNotifications(prev => prev.filter(n => n.orderId !== orderId));
             }
         } catch (error) {
-            console.error('Failed to accept order:', error);
+            alert(error.response?.data?.message || "Failed to accept order");
         }
     };
 
     const handleUpdateStatus = async (orderId, status) => {
         try {
-            const res = await axios.put('/api/delivery/order-status', { orderId, status }, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            const res = await axios.put(`${import.meta.env.VITE_URL}/delivery/order-status`, { orderId, status }, {
+                headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
-                setAssignedOrders(prev => prev.map(o => o.order_id === orderId ? { ...o, delivery_status: status } : o));
+                setAssignedOrders(prev => prev.map(o => o.order_id === orderId ? { ...o, status: status } : o));
+                // If delivered, update stats
+                if (status === 'Delivered') {
+                    const statsRes = await axios.get(`${import.meta.env.VITE_URL}/delivery/stats`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (statsRes.data.success) setStats(statsRes.data.data);
+                }
             }
         } catch (error) {
             console.error('Failed to update status:', error);
@@ -65,7 +134,7 @@ const DeliveryDashboard = () => {
     if (loading) {
         return (
             <div className="mt-20 p-6 space-y-4 max-w-6xl mx-auto min-h-screen bg-gray-100 pt-10">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((_, i) => (
+                {[1, 2, 3, 4].map((_, i) => (
                     <div key={i} className="animate-pulse flex gap-4 items-center bg-white p-6 rounded-[2.5rem] border border-gray-100">
                         <div className="w-16 h-16 bg-gray-300 rounded"></div>
                         <div className="flex-1 space-y-2">
@@ -81,15 +150,50 @@ const DeliveryDashboard = () => {
     return (
         <div className="min-h-screen bg-gray-100 p-6 md:p-10 font-sans mt-20">
             <div className="max-w-6xl mx-auto">
+                <AnimatePresence>
+                    {notifications.length > 0 && (
+                        <motion.div 
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="mb-6 overflow-hidden"
+                        >
+                            {notifications.map(n => (
+                                <div key={n.orderId} className="bg-blue-600 text-white p-4 rounded-2xl flex justify-between items-center shadow-lg mb-2">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xl">🆕</span>
+                                        <div>
+                                            <p className="font-bold">New Order Available!</p>
+                                            <p className="text-xs opacity-90">Order #ORD-{n.orderId} • Potential Earning: ₹{n.charges}</p>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => handleAccept(n.orderId)}
+                                        className="bg-white text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-100 transition-colors"
+                                    >Grab Now</button>
+                                </div>
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight flex items-center gap-3">
-                        Delivery <span className="text-blue-500 underline decoration-blue-200 underline-offset-8">Partner</span>
-                        <div className="px-3 py-1 bg-blue-100 text-blue-500 rounded-full text-xs font-bold animate-pulse">ONLINE</div>
-                    </h1>
+                    <div className="flex items-center gap-6">
+                        <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight flex items-center gap-3">
+                            Delivery <span className="text-blue-500 underline decoration-blue-200 underline-offset-8">Partner</span>
+                        </h1>
+                        <button 
+                            onClick={handleToggleStatus}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${isOnline ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}
+                        >
+                            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                            {isOnline ? 'ONLINE' : 'OFFLINE'}
+                        </button>
+                    </div>
                     <div className="flex items-center gap-4">
                         <div className="text-right">
                             <span className="block text-sm font-semibold text-gray-800">{user?.user_name || "Delivery Partner"}</span>
-                            <span className="block text-xs text-green-500 font-bold uppercase tracking-widest">{stats?.vehicle_type || "Partner"} | ₹{stats?.totalEarnings?.toFixed(2) || "0.00"}</span>
+                            <span className="block text-xs text-blue-500 font-bold uppercase tracking-widest">{stats?.vehicle_type || "Partner"} | Total: ₹{stats?.totalEarnings?.toFixed(2) || "0.00"}</span>
                         </div>
                         <img src={user?.user_image || "https://api.dicebear.com/7.x/avataaars/svg?seed=delivery"} alt="" className="w-12 h-12 rounded-full border-2 border-blue-100 shadow-inner bg-gray-50 p-1" />
                     </div>
@@ -102,7 +206,9 @@ const DeliveryDashboard = () => {
                             <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-xs font-bold">{assignedOrders.length}</span>
                         </h3>
                         {assignedOrders.length === 0 ? (
-                            <div className="p-20 bg-white rounded-3xl border-2 border-dashed border-gray-200 text-center text-gray-400 font-medium">Ready for your shift? Pick a task from the right!</div>
+                            <div className="p-20 bg-white rounded-3xl border-2 border-dashed border-gray-200 text-center text-gray-400 font-medium tracking-tight">
+                                {isOnline ? "Waiting for new orders... Stay tuned!" : "Go online to start receiving orders."}
+                            </div>
                         ) : (
                             assignedOrders.map(o => (
                                 <motion.div 
@@ -115,34 +221,43 @@ const DeliveryDashboard = () => {
                                         <div className="flex justify-between items-center mb-4">
                                             <h4 className="text-lg font-bold text-gray-800">Order #ORD-{o.order_id}</h4>
                                             <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide
-                                                ${o.delivery_status === 'Accepted' ? 'bg-amber-100 text-amber-600' : 
-                                                  o.delivery_status === 'Picked' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}`}>
-                                                {o.delivery_status}
+                                                ${o.status === 'Accepted' ? 'bg-amber-100 text-amber-600' : 
+                                                  o.status === 'Picked' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}`}>
+                                                {o.status}
                                             </span>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4 text-sm font-medium text-gray-500">
-                                            <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100"><span className="block text-[10px] text-gray-400">TOTAL</span> ₹{o.total}</div>
-                                            <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100"><span className="block text-[10px] text-gray-400">PAYMENT</span> {o.payment}</div>
+                                            <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100"><span className="block text-[10px] text-gray-400 font-bold uppercase">Order Total</span> ₹{o.total_amount}</div>
+                                            <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100"><span className="block text-[10px] text-gray-400 font-bold uppercase">Earnings</span> ₹{o.delivery_charges}</div>
+                                        </div>
+                                        <div className="mt-4 p-3 bg-gray-50 rounded-2xl border border-gray-100 text-xs text-gray-600">
+                                            <p className="text-gray-400 font-bold uppercase text-[9px] mb-1">Deliver To</p>
+                                            <p className="font-medium">{o.delivery_address}</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-3 w-full md:w-48">
-                                        {o.delivery_status === 'Accepted' && (
+                                        {o.status === 'Accepted' && (
                                             <button 
                                                 className="w-full py-4 bg-amber-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-amber-100 transition-transform active:scale-95"
                                                 onClick={() => handleUpdateStatus(o.order_id, 'Picked')}
                                             >Pick Up Order</button>
                                         )}
-                                        {o.delivery_status === 'Picked' && (
+                                        {o.status === 'Picked' && (
                                             <button 
                                                 className="w-full py-4 bg-blue-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-100 transition-transform active:scale-95"
                                                 onClick={() => handleUpdateStatus(o.order_id, 'Out for delivery')}
                                             >Start Delivery</button>
                                         )}
-                                        {o.delivery_status === 'Out for delivery' && (
+                                        {o.status === 'Out for delivery' && (
                                             <button 
-                                                className="w-full py-4 bg-green-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-green-100 transition-transform active:scale-95 animate-bounce"
+                                                className="w-full py-4 bg-green-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-green-100 transition-transform active:scale-95 animate-pulse"
                                                 onClick={() => handleUpdateStatus(o.order_id, 'Delivered')}
                                             >Complete Run</button>
+                                        )}
+                                        {o.status === 'Delivered' && (
+                                            <div className="w-full py-4 bg-green-50 text-green-600 rounded-2xl text-sm font-bold text-center border border-green-200">
+                                                ✅ Completed
+                                            </div>
                                         )}
                                     </div>
                                 </motion.div>
@@ -152,12 +267,12 @@ const DeliveryDashboard = () => {
 
                     <aside className="lg:col-span-4 flex flex-col gap-6">
                         <h3 className="text-xl font-bold text-gray-800 flex items-center gap-3">
-                            🛍️ Global Pool
+                            🛍️ Available Pool
                             <span className="px-2 py-0.5 bg-green-50 text-green-600 rounded text-xs font-bold">{orders.length}</span>
                         </h3>
                         <div className="flex flex-col gap-4">
                             {orders.length === 0 ? (
-                                <p className="text-xs text-gray-400 font-medium italic text-center p-10">No tasks in your zone, please refresh.</p>
+                                <p className="text-xs text-gray-400 font-medium italic text-center p-10 bg-white rounded-3xl border border-gray-100">No tasks in your zone right now.</p>
                             ) : (
                                 orders.map(o => (
                                     <motion.div 
@@ -168,15 +283,15 @@ const DeliveryDashboard = () => {
                                     >
                                         <div className="flex justify-between items-center mb-4">
                                             <h4 className="font-bold text-gray-800">#{o.order_id}</h4>
-                                            <span className="text-blue-500 font-bold">₹{o.total}</span>
+                                            <span className="text-green-600 font-bold">Earn ₹{o.delivery_charges || 50}</span>
                                         </div>
                                         <div className="flex items-center gap-4 text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
-                                            <span className="flex items-center gap-1"><div className="w-1 h-1 rounded-full bg-blue-400"></div> 3.4 KM</span>
-                                            <span className="flex items-center gap-1"><div className="w-1 h-1 rounded-full bg-green-400"></div> 12 MIN</span>
+                                            <span className="flex items-center gap-1">📍 {o.city || "Nearby"}</span>
                                         </div>
                                         <button 
-                                            className="w-full py-3 bg-gray-50 text-gray-800 group-hover:bg-blue-600 group-hover:text-white rounded-2xl text-xs font-bold transition-all shadow-sm active:scale-95"
+                                            className={`w-full py-3 rounded-2xl text-xs font-bold transition-all shadow-sm active:scale-95 ${isOnline ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
                                             onClick={() => handleAccept(o.order_id)}
+                                            disabled={!isOnline}
                                         >Grab Task</button>
                                     </motion.div>
                                 ))

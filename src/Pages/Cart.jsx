@@ -4,6 +4,7 @@ import { FaMinus, FaPlus, FaTrash, FaChevronRight, FaTimes } from 'react-icons/f
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
+import logo from '../assets/logo.png';
 
 // 🔥 Skeleton Loader
 const CartSkeleton = () => (
@@ -79,8 +80,9 @@ const Cart = () => {
 
             const formatted = {
               item_name: dish.dish_name || dish.thali_name || dish.name,
-              item_price: parseFloat(dish.dish_price || dish.price),
-              item_image: dish.dish_image || dish.thali_img || dish.image
+              item_price: parseFloat(dish.dish_price || dish.price || dish.thali_price),
+              item_image: dish.dish_image || dish.thali_img || dish.image,
+              restaurant_id: dish.restaurant_id || 0
             };
 
             cache[item.dish_id] = formatted;
@@ -98,27 +100,29 @@ const Cart = () => {
 
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load cart");
+      showPremiumToast("Failed to load cart", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔥 delete item
-  const handleDelete = async (id) => {
+  // 🔥 delete item (Updated to use dish_id for backend consistency)
+  const handleDelete = async (dishId) => {
     try {
-      await axios.delete(`${API}/user/cart/${USER_ID}/cart/remove/${id}`);
-      setCartItems(prev => prev.filter(i => i.cart_id !== id));
-      toast.success("Item removed");
+      await axios.delete(`${API}/user/cart/${USER_ID}/cart/remove/${dishId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setCartItems(prev => prev.filter(i => i.dish_id !== dishId));
+      showPremiumToast("Item removed from cart", "success");
     } catch {
-      toast.error("Delete failed");
+      showPremiumToast("Failed to remove item", "error");
     }
   };
 
-  // 🔥 quantity update
-  const updateQuantity = async (id, quantity) => {
+  // 🔥 quantity update (Updated to use dish_id)
+  const updateQuantity = async (dishId, quantity) => {
     try {
-      await axios.put(`${API}/user/cart/${USER_ID}/cart/update/${id}`, { quantity }, {
+      await axios.put(`${API}/user/cart/${USER_ID}/cart/update/${dishId}`, { quantity }, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -126,17 +130,17 @@ const Cart = () => {
 
       setCartItems(prev =>
         prev.map(item =>
-          item.cart_id === id ? { ...item, quantity } : item
+          item.dish_id === dishId ? { ...item, quantity } : item
         )
       );
-      toast.success("Quantity updated");
+      showPremiumToast(`Quantity updated to ${quantity}`, "info");
     } catch {
-      toast.error("Update failed");
+      showPremiumToast("Update failed", "error");
     }
   };
 
-  const increase = (id, qty) => updateQuantity(id, qty + 1);
-  const decrease = (id, qty) => qty > 1 && updateQuantity(id, qty - 1);
+  const increase = (dishId, qty) => updateQuantity(dishId, qty + 1);
+  const decrease = (dishId, qty) => qty > 1 && updateQuantity(dishId, qty - 1);
 
   // 💰 totals
   const itemTotal = cartItems.reduce(
@@ -184,6 +188,8 @@ const Cart = () => {
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
+
+      console.log("borzoRes : ", borzoRes);
 
       if (borzoRes.data.success) {
         const fee = parseFloat(borzoRes.data.data.delivery_fee_amount);
@@ -243,7 +249,7 @@ const Cart = () => {
         currency: order.currency,
         name: "FOODIO",
         description: "Payment for your delicious meal",
-        image: "https://cdn-icons-png.flaticon.com/512/3595/3595455.png",
+        image: {logo},
         order_id: order.id,
         handler: async (response) => {
           try {
@@ -295,7 +301,8 @@ const placeOrderAPI = async (paymentType) => {
       itemId: item.dish_id,
       quantity: item.quantity,
       price: item.item_price,
-      dishType: item.dish_type
+      dishType: item.dish_type,
+      dishName: item.item_name
     }));
 
     const res = await axios.post(
@@ -305,9 +312,9 @@ const placeOrderAPI = async (paymentType) => {
         restaurantType: cartItems[0]?.dish_type || "",
         items: orderItems,
         totalAmount: total,
-        deliveryAddress: deliveryAddress, // Using modal state
-        phone: phoneNumber, // Using modal state
-        specialInstructions: specialInstruction, // Using modal state
+        deliveryAddress: deliveryAddress, 
+        phone: phoneNumber, 
+        specialInstructions: specialInstruction, 
         paymentMethod: paymentType
       },
       {
@@ -320,9 +327,10 @@ const placeOrderAPI = async (paymentType) => {
       if (res.data.success || res.status === 201) {
         const orderId = res.data.data.orderId || res.data.data.id;
         
-        toast.success("Order placed successfully 🎉");
+        // toast.success("Order placed successfully 🎉");
+        showPremiumToast("Order placed successfully! 🎉", "success");
 
-        // 🚀 Create Borzo Delivery Order
+        // Create Borzo Delivery Order
         try {
           const restaurantId = cartItems[0]?.restaurant_id;
           const restaurantType = cartItems[0]?.dish_type;
@@ -377,12 +385,51 @@ const placeOrderAPI = async (paymentType) => {
 
   } catch (err) {
     console.error(err);
-    toast.error("Order failed");
+    showPremiumToast("Order failed. Please try again.", "error");
   }
 };
+
+  const showPremiumToast = (message, type = "success") => {
+    const colors = {
+      success: "bg-green-600",
+      error: "bg-red-600",
+      info: "bg-blue-600",
+      warning: "bg-orange-600"
+    };
+    
+    toast.dismiss();
+    toast(
+      <div className="flex items-center gap-3 font-bold text-sm">
+        <span className="text-xl">
+          {type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+        </span>
+        {message}
+      </div>,
+      {
+        className: `${colors[type]} text-white rounded-2xl shadow-2xl border-none p-4`,
+        progressClassName: "bg-white/30",
+        autoClose: 3000,
+        hideProgressBar: false,
+      }
+    );
+  };
+
   useEffect(() => {
     handleGetCart();
   }, []);
+
+  // 🚚 Auto-calculate delivery when address or cart changes
+  useEffect(() => {
+    if (cartItems.length > 0 && deliveryAddress && phoneNumber) {
+      calculateBorzoDelivery();
+    }
+  }, [deliveryAddress, phoneNumber, cartItems.length]);
+
+  // Sync user details if they change or are missing
+  useEffect(() => {
+    if (!deliveryAddress && USER?.user_address) setDeliveryAddress(USER.user_address);
+    if (!phoneNumber && USER?.user_phone) setPhoneNumber(USER.user_phone);
+  }, [USER]);
 
   // ⏳ loading UI
   if (loading) return <CartSkeleton />;
@@ -425,7 +472,7 @@ const placeOrderAPI = async (paymentType) => {
           {/* 🔥 quantity control */}
           <div className="flex items-center gap-2">
             <motion.button whileTap={{ scale: 0.8 }}
-              onClick={() => decrease(item.cart_id, item.quantity)}
+            onClick={() => decrease(item.dish_id, item.quantity)}
               className="bg-gray-200 p-2 rounded">
               <FaMinus />
             </motion.button>
@@ -440,7 +487,7 @@ const placeOrderAPI = async (paymentType) => {
             </motion.p>
 
             <motion.button whileTap={{ scale: 0.8 }}
-              onClick={() => increase(item.cart_id, item.quantity)}
+              onClick={() => increase(item.dish_id, item.quantity)}
               className="bg-green-600 text-white p-2 rounded">
               <FaPlus />
             </motion.button>
@@ -448,7 +495,7 @@ const placeOrderAPI = async (paymentType) => {
 
           {/* 🗑 delete */}
           <motion.button whileTap={{ scale: 0.8 }}
-            onClick={() => handleDelete(item.cart_id)}
+            onClick={() => handleDelete(item.dish_id)}
             className="text-red-600">
             <FaTrash />
           </motion.button>
@@ -464,7 +511,7 @@ const placeOrderAPI = async (paymentType) => {
 
         <div className="flex justify-between">
           <span>Delivery</span>
-          <span>₹{delivery}</span>
+          <span>₹{deliveryCharge}</span>
         </div>
 
         <div className="flex justify-between">
