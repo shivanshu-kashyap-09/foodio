@@ -24,6 +24,7 @@ const OrderTracking = () => {
         { key: 'pending', label: 'Order Placed', icon: <FaBox />, color: 'bg-blue-500' },
         { key: 'confirmed', label: 'Confirmed', icon: <FaCheckCircle />, color: 'bg-purple-500' },
         { key: 'preparing', label: 'Kitchen Preparing', icon: <FaUtensils />, color: 'bg-orange-500' },
+        { key: 'picked', label: 'Picked Up', icon: <FaStore />, color: 'bg-amber-500' },
         { key: 'out_for_delivery', label: 'Out for Delivery', icon: <FaTruck />, color: 'bg-yellow-500' },
         { key: 'delivered', label: 'Delivered', icon: <FaHome />, color: 'bg-green-500' }
     ];
@@ -190,6 +191,18 @@ const OrderTracking = () => {
                                         <div className="flex items-center gap-4 mt-2">
                                             <a href={`tel:${tracking.delivery.partnerPhone}`} className="text-red-600 font-bold text-xs underline underline-offset-4">Call Rider</a>
                                             <button className="text-red-600 font-bold text-xs underline underline-offset-4">Message</button>
+                                        </div>
+                                    )}
+                                    {tracking?.delivery?.borzoTrackingUrl && (
+                                        <div className="mt-4">
+                                            <a 
+                                                href={tracking.delivery.borzoTrackingUrl} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="inline-block bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-md hover:bg-red-700 transition"
+                                            >
+                                                Track Internally via Borzo
+                                            </a>
                                         </div>
                                     )}
                                 </div>

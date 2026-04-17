@@ -10,6 +10,7 @@ const Veg = ({ vegDish }) => {
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState({ price: '', rating: '', delivery: '' });
+  const [visibleCount, setVisibleCount] = useState(12);
   const filterRef = useRef(null);
   const searchRef = useRef(null);
   const [loading, setLoading] = useState(true);
@@ -221,7 +222,7 @@ const Veg = ({ vegDish }) => {
               exit={{ opacity: 0 }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8"
             >
-              {displayItems.slice(0, 12).map((dish, index) => (
+              {displayItems.slice(0, visibleCount).map((dish, index) => (
                 <motion.div
                   key={`${dish.dish_id || dish.id}-${index}`}   // ✅ FIXED KEY
                   layout
@@ -269,13 +270,16 @@ const Veg = ({ vegDish }) => {
         </AnimatePresence>
 
         {/* View All Action */}
-        {!searchQuery && displayItems.length > 8 && (
+        {!searchQuery && displayItems.length > visibleCount && visibleCount < 20 && (
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             className="mt-16 flex justify-center"
           >
-            <button className="group flex items-center gap-4 px-10 py-5 bg-white border-2 border-gray-100 rounded-full font-black text-xs uppercase tracking-widest text-gray-600 hover:border-red-600 hover:text-red-600 transition-all shadow-sm">
+            <button
+              onClick={() => setVisibleCount(20)}
+              className="group flex items-center gap-4 px-10 py-5 bg-white border-2 border-gray-100 rounded-full font-black text-xs uppercase tracking-widest text-gray-600 hover:border-red-600 hover:text-red-600 transition-all shadow-sm"
+            >
               Explore More Dishes
               <FaChevronRight className="group-hover:translate-x-1 transition-transform" />
             </button>

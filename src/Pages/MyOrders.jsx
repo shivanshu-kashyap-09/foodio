@@ -10,6 +10,27 @@ const MyOrders = () => {
     const USER_ID = localStorage.getItem('user_id');
     const API = import.meta.env.VITE_URL;
 
+    const handleCancelOrder = async (orderId) => {
+        try {
+            const res = await axios.put(
+                `${API}/user/orders/${USER_ID}/orders/${orderId}/cancel`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                }
+            );
+            if (res.status === 200 && res.data.success) {
+                setOrders(prev => prev.filter(order => (order.order_id || order.id) !== orderId));
+            } else {
+                console.error('Cancel response error', res.data);
+            }
+        } catch (err) {
+            console.error('Failed to cancel order', err);
+        }
+    };
+
     useEffect(() => {
         const fetchOrders = async () => {
             try {
@@ -132,28 +153,38 @@ const MyOrders = () => {
                                                 <FaBox className="text-gray-300" />
                                                 <div>
                                                     <p className="text-[10px] text-gray-400 font-bold uppercase">Items</p>
-                                                    <p className="font-bold text-gray-700 text-sm">₹{order.total || order.totalAmount}</p>
+                                                    <p className="font-bold text-gray-700 text-sm">₹{order.total || order.totalAmount || order.total_amount}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <FaMapMarkerAlt className="text-gray-300" />
                                                 <div>
                                                     <p className="text-[10px] text-gray-400 font-bold uppercase">Area</p>
-                                                    <p className="font-bold text-gray-700 text-sm truncate max-w-[100px]">Gurgaon</p>
+                                                    <p className="font-bold text-gray-700 text-sm truncate max-w-[100px]">{order.city || "Gurgaon"}</p>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-4">
+                                        <div className="flex flex-col gap-3 sm:flex-row">
                                             <Link 
                                                 to={`/order/tracking/${order.order_id || order.id}`}
                                                 className="flex-1 bg-gray-900 text-white text-center py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-gray-800 transition-all shadow-lg"
                                             >
                                                 Track Now <FaChevronRight className="text-xs" />
                                             </Link>
-                                            <button className="flex-1 bg-red-600 text-white text-center py-4 rounded-2xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-100">
-                                                Reorder
-                                            </button>
+                                            <div className="flex flex-1 gap-3">
+                                                {!['delivered', 'cancelled'].includes(((order.delivery_status || order.status) || '').toLowerCase()) && (
+                                                    <button
+                                                        onClick={() => handleCancelOrder(order.order_id || order.id)}
+                                                        className="flex-1 bg-red-600 text-white text-center py-4 rounded-2xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-100"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                )}
+                                                <button className="flex-1 bg-red-500 text-white text-center py-4 rounded-2xl font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-100">
+                                                    Reorder
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>

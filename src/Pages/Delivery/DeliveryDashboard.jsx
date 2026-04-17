@@ -10,10 +10,17 @@ const DeliveryDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [isOnline, setIsOnline] = useState(false);
     const [notifications, setNotifications] = useState([]);
+    const [otpRequests, setOtpRequests] = useState({});
     const [socket, setSocket] = useState(null);
     
     const user = JSON.parse(localStorage.getItem('user'));
     const token = localStorage.getItem('token');
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_URL || 'http://localhost:5000';
+
+    const formatCurrency = (value) => {
+        const amount = Number(value);
+        return Number.isFinite(amount) ? amount.toFixed(2) : '0.00';
+    };
 
     useEffect(() => {
         const fetchDeliveryData = async () => {
@@ -44,7 +51,7 @@ const DeliveryDashboard = () => {
         fetchDeliveryData();
 
         // Socket integration
-        const newSocket = io('http://localhost:5000', {
+        const newSocket = io(socketUrl, {
             auth: { token, userId: user?.user_id }
         });
 
@@ -111,23 +118,45 @@ const DeliveryDashboard = () => {
         }
     };
 
+    const handleOtpChange = (orderId, value) => {
+        setOtpRequests(prev => ({ ...prev, [orderId]: value }));
+    };
+
     const handleUpdateStatus = async (orderId, status) => {
         try {
-            const res = await axios.put(`${import.meta.env.VITE_URL}/delivery/order-status`, { orderId, status }, {
+            const payload = { orderId, status };
+            if (['picked', 'delivered'].includes(status)) {
+                const otp = otpRequests[orderId]?.trim();
+                if (!otp) {
+                    alert(`Please enter the OTP to ${status === 'picked' ? 'pick up' : 'complete'} the order.`);
+                    return;
+                }
+                payload.otp = otp;
+            }
+            const res = await axios.put(`${import.meta.env.VITE_URL}/delivery/order-status`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
-                setAssignedOrders(prev => prev.map(o => o.order_id === orderId ? { ...o, status: status } : o));
-                // If delivered, update stats
-                if (status === 'Delivered') {
-                    const statsRes = await axios.get(`${import.meta.env.VITE_URL}/delivery/stats`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+                setAssignedOrders(prev => prev.map(o => o.order_id === orderId ? { ...o, status } : o));
+                setOtpRequests(prev => ({ ...prev, [orderId]: '' }));
+                
+                // If delivered, refresh stats & assigned orders
+                if (status === 'delivered') {
+                    const [statsRes, assignedRes] = await Promise.all([
+                        axios.get(`${import.meta.env.VITE_URL}/delivery/stats`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        }),
+                        axios.get(`${import.meta.env.VITE_URL}/delivery/assigned-orders`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        })
+                    ]);
                     if (statsRes.data.success) setStats(statsRes.data.data);
+                    if (assignedRes.data.success) setAssignedOrders(assignedRes.data.data);
                 }
             }
         } catch (error) {
             console.error('Failed to update status:', error);
+            alert(error.response?.data?.message || 'Failed to update order status');
         }
     };
 
@@ -193,7 +222,7 @@ const DeliveryDashboard = () => {
                     <div className="flex items-center gap-4">
                         <div className="text-right">
                             <span className="block text-sm font-semibold text-gray-800">{user?.user_name || "Delivery Partner"}</span>
-                            <span className="block text-xs text-blue-500 font-bold uppercase tracking-widest">{stats?.vehicle_type || "Partner"} | Total: ₹{stats?.totalEarnings?.toFixed(2) || "0.00"}</span>
+                            <span className="block text-xs text-blue-500 font-bold uppercase tracking-widest">{stats?.vehicle_type || "Partner"} | Total: ₹{formatCurrency(stats?.totalEarnings)}</span>
                         </div>
                         <img src={user?.user_image || "https://api.dicebear.com/7.x/avataaars/svg?seed=delivery"} alt="" className="w-12 h-12 rounded-full border-2 border-blue-100 shadow-inner bg-gray-50 p-1" />
                     </div>
@@ -221,9 +250,10 @@ const DeliveryDashboard = () => {
                                         <div className="flex justify-between items-center mb-4">
                                             <h4 className="text-lg font-bold text-gray-800">Order #ORD-{o.order_id}</h4>
                                             <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide
-                                                ${o.status === 'Accepted' ? 'bg-amber-100 text-amber-600' : 
-                                                  o.status === 'Picked' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}`}>
-                                                {o.status}
+                                                ${o.status === 'confirmed' ? 'bg-amber-100 text-amber-600' : 
+                                                  o.status === 'picked' ? 'bg-purple-100 text-purple-600' :
+                                                  o.status === 'out_for_delivery' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}`}>
+                                                {o.status === 'confirmed' ? 'Accepted' : o.status === 'picked' ? 'Picked Up' : o.status === 'out_for_delivery' ? 'Out for Delivery' : o.status === 'delivered' ? 'Delivered' : o.status}
                                             </span>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4 text-sm font-medium text-gray-500">
@@ -236,27 +266,45 @@ const DeliveryDashboard = () => {
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-3 w-full md:w-48">
-                                        {o.status === 'Accepted' && (
-                                            <button 
-                                                className="w-full py-4 bg-amber-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-amber-100 transition-transform active:scale-95"
-                                                onClick={() => handleUpdateStatus(o.order_id, 'Picked')}
-                                            >Pick Up Order</button>
+                                        {o.status === 'confirmed' && (
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    value={otpRequests[o.order_id] || ''}
+                                                    onChange={(e) => handleOtpChange(o.order_id, e.target.value)}
+                                                    placeholder="Enter handover OTP"
+                                                    className="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm text-gray-700 focus:ring-2 focus:ring-amber-200 outline-none"
+                                                />
+                                                <button 
+                                                    className="w-full py-4 bg-amber-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-amber-100 transition-transform active:scale-95"
+                                                    onClick={() => handleUpdateStatus(o.order_id, 'picked')}
+                                                >Verify Pickup</button>
+                                            </>
                                         )}
-                                        {o.status === 'Picked' && (
+                                        {o.status === 'picked' && (
                                             <button 
                                                 className="w-full py-4 bg-blue-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-100 transition-transform active:scale-95"
-                                                onClick={() => handleUpdateStatus(o.order_id, 'Out for delivery')}
+                                                onClick={() => handleUpdateStatus(o.order_id, 'out_for_delivery')}
                                             >Start Delivery</button>
                                         )}
-                                        {o.status === 'Out for delivery' && (
-                                            <button 
-                                                className="w-full py-4 bg-green-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-green-100 transition-transform active:scale-95 animate-pulse"
-                                                onClick={() => handleUpdateStatus(o.order_id, 'Delivered')}
-                                            >Complete Run</button>
+                                        {o.status === 'out_for_delivery' && (
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    value={otpRequests[o.order_id] || ''}
+                                                    onChange={(e) => handleOtpChange(o.order_id, e.target.value)}
+                                                    placeholder="Enter delivery OTP"
+                                                    className="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm text-gray-700 focus:ring-2 focus:ring-green-200 outline-none"
+                                                />
+                                                <button 
+                                                    className="w-full py-4 bg-green-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-green-100 transition-transform active:scale-95 animate-pulse"
+                                                    onClick={() => handleUpdateStatus(o.order_id, 'delivered')}
+                                                >Complete Delivery</button>
+                                            </>
                                         )}
-                                        {o.status === 'Delivered' && (
+                                        {o.status === 'delivered' && (
                                             <div className="w-full py-4 bg-green-50 text-green-600 rounded-2xl text-sm font-bold text-center border border-green-200">
-                                                ✅ Completed
+                                                ✅ Completed • Earned ₹{o.delivery_charges || 50}
                                             </div>
                                         )}
                                     </div>
