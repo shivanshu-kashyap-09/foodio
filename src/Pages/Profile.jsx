@@ -84,7 +84,16 @@ const Profile = () => {
 
   const handleCancelOrder = async (order_id) => {
     try {
-      const res = await axios.put(`${import.meta.env.VITE_URL}/user/orders/${USER_ID}/orders/${order_id}/cancel`);
+      const res = await axios.put(
+        `${import.meta.env.VITE_URL}/user/orders/${USER_ID}/orders/${order_id}/cancel`,
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
       if (res.status === 200) {
         toast.success("Order cancelled successfully!");
         handleOrders();
@@ -261,7 +270,7 @@ const Profile = () => {
                 const isActive = !['delivered', 'cancelled'].includes(item.status?.toLowerCase());
                 return (
                   <motion.div 
-                    key={item.id}
+                    key={item.order_id}
                     whileHover={{ y: -5 }}
                     className={`p-6 rounded-3xl border-2 transition-all ${isActive ? 'border-red-100 bg-red-50/30 shadow-red-50' : 'border-gray-50 bg-white hover:border-gray-100'}`}
                   >
@@ -271,8 +280,8 @@ const Profile = () => {
                           <FaBox />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Order #FD-{item.id}</p>
-                          <h4 className="font-bold text-gray-900">{item.items || 'Delicious Food'}</h4>
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Order #FD-{item.order_id}</p>
+                          <h4 className="font-bold text-gray-900">{item.items ? `${item.items} Items` : 'Delicious Food'}</h4>
                         </div>
                       </div>
                       <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-tighter border ${item.status === "Delivered" ? "bg-green-50 text-green-600 border-green-100" : "bg-orange-50 text-orange-600 border-orange-100"}`}>
@@ -288,7 +297,7 @@ const Profile = () => {
                       <div className="flex gap-2">
                         {item.status?.toLowerCase() === 'pending' && (
                           <button
-                            onClick={() => handleCancelOrder(item.id)}
+                            onClick={() => handleCancelOrder(item.order_id)}
                             className="bg-white border-2 border-red-100 text-red-500 p-3 rounded-2xl hover:bg-red-50 transition-colors"
                             title="Cancel"
                           >

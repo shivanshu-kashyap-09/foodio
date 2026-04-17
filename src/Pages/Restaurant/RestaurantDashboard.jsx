@@ -79,20 +79,22 @@ const RestaurantDashboard = () => {
         }
     };
 
-    const handleUpdateStatus = async (orderId, newStatus) => {
+    const handleUpdateStatus = async (orderId, newStatus, reason = null) => {
         try {
-            const res = await axios.put(`${import.meta.env.VITE_URL}/restaurant/dashboard/order-status`, {
-                orderId,
-                status: newStatus
-            }, {
+            const normalizedStatus = newStatus.toLowerCase();
+            const payload = { orderId, status: normalizedStatus };
+            if (reason) payload.reason = reason;
+
+            const res = await axios.put(`${import.meta.env.VITE_URL}/restaurant/dashboard/order-status`, payload, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
             if (res.data.success) {
-                toast.success(`Order marked as ${newStatus}`);
-                setOrders(prev => prev.map(o => o.order_id === orderId ? { ...o, delivery_status: newStatus } : o));
+                toast.success(`Order marked as ${normalizedStatus}`);
+                setOrders(prev => prev.map(o => o.order_id === orderId ? { ...o, delivery_status: normalizedStatus } : o));
             }
         } catch (err) {
-            toast.error("Status update failed");
+            console.error('Restaurant status update failed', err);
+            toast.error(err.response?.data?.message || "Status update failed");
         }
     };
 
@@ -322,33 +324,53 @@ const RestaurantDashboard = () => {
                                                     <td className="px-6 py-4 text-xs font-bold text-gray-600 underline">User ID: {order.user_id}</td>
                                                     <td className="px-6 py-4 font-black text-red-600 text-xs">₹{order.total}</td>
                                                     <td className="px-6 py-4">
-                                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${
-                                                            order.delivery_status === 'Pending' ? 'bg-orange-100 text-orange-600' :
-                                                            order.delivery_status === 'Confirmed' ? 'bg-blue-100 text-blue-600' :
-                                                            'bg-green-100 text-green-600'
-                                                        }`}>
-                                                            {order.delivery_status}
-                                                        </span>
+                                                        {(() => {
+                                                            const normalizedStatus = (order.delivery_status || '').toLowerCase();
+                                                            let classes = 'bg-gray-100 text-gray-600';
+                                                            if (normalizedStatus === 'pending') classes = 'bg-orange-100 text-orange-600';
+                                                            else if (normalizedStatus === 'confirmed') classes = 'bg-blue-100 text-blue-600';
+                                                            else if (normalizedStatus === 'preparing') classes = 'bg-yellow-100 text-yellow-600';
+                                                            else if (normalizedStatus === 'ready') classes = 'bg-indigo-100 text-indigo-600';
+                                                            else if (normalizedStatus === 'picked' || normalizedStatus === 'out_for_delivery') classes = 'bg-purple-100 text-purple-600';
+                                                            else if (normalizedStatus === 'delivered') classes = 'bg-green-100 text-green-600';
+                                                            else if (normalizedStatus === 'cancelled') classes = 'bg-red-100 text-red-600';
+                                                            return (
+                                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${classes}`}>
+                                                                    {order.delivery_status}
+                                                                </span>
+                                                            );
+                                                        })()}
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <div className="flex justify-center gap-2">
-                                                            {order.delivery_status === 'Pending' && (
+                                                        <div className="flex flex-wrap justify-center gap-2">
+                                                            {['pending'].includes((order.delivery_status || '').toLowerCase()) && (
                                                                 <button 
-                                                                    onClick={() => handleUpdateStatus(order.order_id, 'Confirmed')}
+                                                                    onClick={() => handleUpdateStatus(order.order_id, 'confirmed')}
                                                                     className="px-3 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase hover:bg-blue-700 shadow-md shadow-blue-100 transition-all"
                                                                 >Confirm</button>
                                                             )}
-                                                            {order.delivery_status === 'Confirmed' && (
+                                                            {['confirmed'].includes((order.delivery_status || '').toLowerCase()) && (
                                                                 <button 
-                                                                    onClick={() => handleUpdateStatus(order.order_id, 'Preparing')}
+                                                                    onClick={() => handleUpdateStatus(order.order_id, 'preparing')}
                                                                     className="px-3 py-1 bg-red-600 text-white rounded-lg text-[10px] font-black uppercase hover:bg-red-700 shadow-md shadow-red-100 transition-all"
                                                                 >Preparing</button>
                                                             )}
-                                                            {order.delivery_status === 'Preparing' && (
+                                                            {['preparing'].includes((order.delivery_status || '').toLowerCase()) && (
                                                                 <button 
-                                                                    onClick={() => handleUpdateStatus(order.order_id, 'Out for Delivery')}
-                                                                    className="px-3 py-1 bg-yellow-500 text-white rounded-lg text-[10px] font-black uppercase hover:bg-yellow-600 shadow-md shadow-yellow-100 transition-all"
-                                                                >Finish</button>
+                                                                    onClick={() => handleUpdateStatus(order.order_id, 'ready')}
+                                                                    className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-[10px] font-black uppercase hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all"
+                                                                >Ready for Pickup</button>
+                                                            )}
+                                                            {['pending', 'confirmed', 'preparing', 'ready'].includes((order.delivery_status || '').toLowerCase()) && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const reason = window.prompt('Cancel reason', 'Cancelled by restaurant');
+                                                                        if (reason !== null) {
+                                                                            handleUpdateStatus(order.order_id, 'cancelled', reason);
+                                                                        }
+                                                                    }}
+                                                                    className="px-3 py-1 bg-red-600 text-white rounded-lg text-[10px] font-black uppercase hover:bg-red-700 shadow-md shadow-red-100 transition-all"
+                                                                >Cancel</button>
                                                             )}
                                                             <button className="p-2 text-gray-300 hover:text-gray-500"><FaEllipsisV /></button>
                                                         </div>

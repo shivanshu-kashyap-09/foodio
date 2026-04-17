@@ -64,7 +64,7 @@ const Thali = ({ thalis }) => {
   };
 
   return (
-    <div className="relative py-20 bg-gradient-to-br from-orange-50/50 via-white to-red-50/50 overflow-hidden">
+    <div className="relative pt-20 bg-gradient-to-br from-orange-50/50 via-white to-red-50/50 overflow-hidden">
       
       {/* Decorative background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">

@@ -4,6 +4,7 @@ import { FaMinus, FaPlus, FaTrash, FaChevronRight, FaTimes } from 'react-icons/f
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
+import logo from '../assets/logo.png';
 
 // 🔥 Skeleton Loader
 const CartSkeleton = () => (
@@ -79,8 +80,9 @@ const Cart = () => {
 
             const formatted = {
               item_name: dish.dish_name || dish.thali_name || dish.name,
-              item_price: parseFloat(dish.dish_price || dish.price),
-              item_image: dish.dish_image || dish.thali_img || dish.image
+              item_price: parseFloat(dish.dish_price || dish.price || dish.thali_price),
+              item_image: dish.dish_image || dish.thali_img || dish.image,
+              restaurant_id: dish.restaurant_id || 0
             };
 
             cache[item.dish_id] = formatted;
@@ -98,27 +100,29 @@ const Cart = () => {
 
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load cart");
+      showPremiumToast("Failed to load cart", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔥 delete item
-  const handleDelete = async (id) => {
+  // 🔥 delete item (Updated to use dish_id for backend consistency)
+  const handleDelete = async (dishId) => {
     try {
-      await axios.delete(`${API}/user/cart/${USER_ID}/cart/remove/${id}`);
-      setCartItems(prev => prev.filter(i => i.cart_id !== id));
-      toast.success("Item removed");
+      await axios.delete(`${API}/user/cart/${USER_ID}/cart/remove/${dishId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setCartItems(prev => prev.filter(i => i.dish_id !== dishId));
+      showPremiumToast("Item removed from cart", "success");
     } catch {
-      toast.error("Delete failed");
+      showPremiumToast("Failed to remove item", "error");
     }
   };
 
-  // 🔥 quantity update
-  const updateQuantity = async (id, quantity) => {
+  // 🔥 quantity update (Updated to use dish_id)
+  const updateQuantity = async (dishId, quantity) => {
     try {
-      await axios.put(`${API}/user/cart/${USER_ID}/cart/update/${id}`, { quantity }, {
+      await axios.put(`${API}/user/cart/${USER_ID}/cart/update/${dishId}`, { quantity }, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -126,17 +130,17 @@ const Cart = () => {
 
       setCartItems(prev =>
         prev.map(item =>
-          item.cart_id === id ? { ...item, quantity } : item
+          item.dish_id === dishId ? { ...item, quantity } : item
         )
       );
-      toast.success("Quantity updated");
+      showPremiumToast(`Quantity updated to ${quantity}`, "info");
     } catch {
-      toast.error("Update failed");
+      showPremiumToast("Update failed", "error");
     }
   };
 
-  const increase = (id, qty) => updateQuantity(id, qty + 1);
-  const decrease = (id, qty) => qty > 1 && updateQuantity(id, qty - 1);
+  const increase = (dishId, qty) => updateQuantity(dishId, qty + 1);
+  const decrease = (dishId, qty) => qty > 1 && updateQuantity(dishId, qty - 1);
 
   // 💰 totals
   const itemTotal = cartItems.reduce(
@@ -162,7 +166,7 @@ const Cart = () => {
       setIsCalculatingDelivery(true);
       const restaurantId = cartItems[0]?.restaurant_id;
       const restaurantType = cartItems[0]?.dish_type;
-      
+
       // 1. Get Restaurant Address
       const restRes = await axios.get(`${API}/restaurants/${restaurantType}/${restaurantId}`);
       const restaurant = restRes.data.data;
@@ -171,9 +175,9 @@ const Cart = () => {
       const borzoRes = await axios.post(`${API}/delivery/borzo/calculate`, {
         points: [
           {
-            address: restaurant.location || restaurant.restaurant_address,
-            phone: restaurant.phone || restaurant.restaurant_phone,
-            name: restaurant.name || restaurant.restaurant_name
+            address: restaurant?.location || restaurant?.restaurant_address || restaurant?.address || "Haridwar, Uttarakhand, India",
+            phone: restaurant?.phone || restaurant?.restaurant_phone || "919876543211",
+            name: restaurant?.name || restaurant?.restaurant_name || "Foodio Restaurant"
           },
           {
             address: deliveryAddress,
@@ -185,13 +189,19 @@ const Cart = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
 
+      console.log("========= BORZO CALCULATE FRONTEND RESPONSE =========", borzoRes.data);
+
       if (borzoRes.data.success) {
-        const fee = parseFloat(borzoRes.data.data.delivery_fee_amount);
+        // Borzo returns the data inside order object: { is_successful: true, order: { payment_amount: "..." } }
+        const borzoOrderData = borzoRes.data.data;
+        const fee = parseFloat(borzoOrderData?.order?.delivery_fee_amount || borzoOrderData?.order?.payment_amount || 0);
+        console.log("========= BORZO EXTRACTED FEE =========", fee);
+        
         setDeliveryCharge(fee > 0 ? fee : 50);
-        setBorzoOrderDetails(borzoRes.data.data);
+        setBorzoOrderDetails(borzoOrderData);
       }
     } catch (err) {
-      console.error("Borzo Calculation Error:", err);
+      console.error("========= BORZO CALCULATE FRONTEND ERROR =========", err?.response?.data || err.message);
       // Fallback to default
       setDeliveryCharge(50);
     } finally {
@@ -243,7 +253,7 @@ const Cart = () => {
         currency: order.currency,
         name: "FOODIO",
         description: "Payment for your delicious meal",
-        image: "https://cdn-icons-png.flaticon.com/512/3595/3595455.png",
+        image: { logo },
         order_id: order.id,
         handler: async (response) => {
           try {
@@ -287,55 +297,61 @@ const Cart = () => {
     }
   };
 
-const placeOrderAPI = async (paymentType) => {
-  try {
-    const token = localStorage.getItem("token");
+  const placeOrderAPI = async (paymentType) => {
+    try {
+      const token = localStorage.getItem("token");
 
-    const orderItems = cartItems.map(item => ({
-      itemId: item.dish_id,
-      quantity: item.quantity,
-      price: item.item_price,
-      dishType: item.dish_type
-    }));
+      const orderItems = cartItems.map(item => ({
+        itemId: item.dish_id,
+        quantity: item.quantity,
+        price: item.item_price,
+        dishType: item.dish_type,
+        dishName: item.item_name
+      }));
 
-    const res = await axios.post(
-      `${API}/user/orders/${USER_ID}/orders`,
-      {
-        restaurantId: cartItems[0]?.restaurant_id || 0,
-        restaurantType: cartItems[0]?.dish_type || "",
-        items: orderItems,
-        totalAmount: total,
-        deliveryAddress: deliveryAddress, // Using modal state
-        phone: phoneNumber, // Using modal state
-        specialInstructions: specialInstruction, // Using modal state
-        paymentMethod: paymentType
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
+      const res = await axios.post(
+        `${API}/user/orders/${USER_ID}/orders`,
+        {
+          restaurantId: cartItems[0]?.restaurant_id || 0,
+          restaurantType: cartItems[0]?.dish_type || "",
+          items: orderItems,
+          totalAmount: total,
+          deliveryAddress: deliveryAddress,
+          phone: phoneNumber,
+          specialInstructions: specialInstruction,
+          paymentMethod: paymentType
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
-      }
-    );
+      );
 
       if (res.data.success || res.status === 201) {
         const orderId = res.data.data.orderId || res.data.data.id;
-        
-        toast.success("Order placed successfully 🎉");
 
-        // 🚀 Create Borzo Delivery Order
+        // toast.success("Order placed successfully 🎉");
+        showPremiumToast("Order placed successfully! 🎉", "success");
+
+        // Create Borzo Delivery Order
         try {
           const restaurantId = cartItems[0]?.restaurant_id;
           const restaurantType = cartItems[0]?.dish_type;
           const restRes = await axios.get(`${API}/restaurants/${restaurantType}/${restaurantId}`);
           const restaurant = restRes.data.data;
 
-          await axios.post(`${API}/delivery/borzo/create`, {
+          const borzoResp = await axios.post(`${API}/delivery/borzo/create`, {
+            localOrderId: orderId,
             orderData: {
               matter: `Order #FD-${orderId} - Foodio Delivery`,
               points: [
                 {
-                  address: restaurant.location || restaurant.restaurant_address,
-                  contact_person: { phone: restaurant.phone || restaurant.restaurant_phone, name: restaurant.name || restaurant.restaurant_name },
+                  address: restaurant?.location || restaurant?.restaurant_address || restaurant?.address || "Haridwar, Uttarakhand, India",
+                  contact_person: { 
+                    phone: restaurant?.phone || restaurant?.restaurant_phone || "919876543211", 
+                    name: restaurant?.name || restaurant?.restaurant_name || "Foodio Restaurant" 
+                  },
                   note: "Pick up the food from the counter."
                 },
                 {
@@ -348,9 +364,10 @@ const placeOrderAPI = async (paymentType) => {
           }, {
             headers: { Authorization: `Bearer ${token}` }
           });
+          console.log("========= BORZO FRONTEND SUCCESS =========", borzoResp.data);
           toast.info("Delivery partner assigned 🚚");
         } catch (borzoError) {
-          console.error("Borzo Order Creation Error:", borzoError);
+          console.error("========= BORZO FRONTEND ERROR =========", borzoError?.response?.data || borzoError.message);
           toast.warning("Manual delivery assignment may be needed.");
         }
 
@@ -366,7 +383,7 @@ const placeOrderAPI = async (paymentType) => {
         }
 
         setCartItems([]);
-        
+
         // 🚀 Show Success UI then Navigate
         setShowSuccess(true);
         setTimeout(() => {
@@ -375,14 +392,53 @@ const placeOrderAPI = async (paymentType) => {
         }, 3000);
       }
 
-  } catch (err) {
-    console.error(err);
-    toast.error("Order failed");
-  }
-};
+    } catch (err) {
+      console.error(err);
+      showPremiumToast("Order failed. Please try again.", "error");
+    }
+  };
+
+  const showPremiumToast = (message, type = "success") => {
+    const colors = {
+      success: "bg-green-600",
+      error: "bg-red-600",
+      info: "bg-blue-600",
+      warning: "bg-orange-600"
+    };
+
+    toast.dismiss();
+    toast(
+      <div className="flex items-center gap-3 font-bold text-sm">
+        <span className="text-xl">
+          {type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+        </span>
+        {message}
+      </div>,
+      {
+        className: `${colors[type]} text-white rounded-2xl shadow-2xl border-none p-4`,
+        progressClassName: "bg-white/30",
+        autoClose: 3000,
+        hideProgressBar: false,
+      }
+    );
+  };
+
   useEffect(() => {
     handleGetCart();
   }, []);
+
+  // 🚚 Auto-calculate delivery when address or cart changes
+  useEffect(() => {
+    if (cartItems.length > 0 && deliveryAddress && phoneNumber) {
+      calculateBorzoDelivery();
+    }
+  }, [deliveryAddress, phoneNumber, cartItems.length]);
+
+  // Sync user details if they change or are missing
+  useEffect(() => {
+    if (!deliveryAddress && USER?.user_address) setDeliveryAddress(USER.user_address);
+    if (!phoneNumber && USER?.user_phone) setPhoneNumber(USER.user_phone);
+  }, [USER]);
 
   // ⏳ loading UI
   if (loading) return <CartSkeleton />;
@@ -425,7 +481,7 @@ const placeOrderAPI = async (paymentType) => {
           {/* 🔥 quantity control */}
           <div className="flex items-center gap-2">
             <motion.button whileTap={{ scale: 0.8 }}
-              onClick={() => decrease(item.cart_id, item.quantity)}
+              onClick={() => decrease(item.dish_id, item.quantity)}
               className="bg-gray-200 p-2 rounded">
               <FaMinus />
             </motion.button>
@@ -440,7 +496,7 @@ const placeOrderAPI = async (paymentType) => {
             </motion.p>
 
             <motion.button whileTap={{ scale: 0.8 }}
-              onClick={() => increase(item.cart_id, item.quantity)}
+              onClick={() => increase(item.dish_id, item.quantity)}
               className="bg-green-600 text-white p-2 rounded">
               <FaPlus />
             </motion.button>
@@ -448,7 +504,7 @@ const placeOrderAPI = async (paymentType) => {
 
           {/* 🗑 delete */}
           <motion.button whileTap={{ scale: 0.8 }}
-            onClick={() => handleDelete(item.cart_id)}
+            onClick={() => handleDelete(item.dish_id)}
             className="text-red-600">
             <FaTrash />
           </motion.button>
@@ -464,7 +520,7 @@ const placeOrderAPI = async (paymentType) => {
 
         <div className="flex justify-between">
           <span>Delivery</span>
-          <span>₹{delivery}</span>
+          <span>₹{deliveryCharge}</span>
         </div>
 
         <div className="flex justify-between">
@@ -491,13 +547,13 @@ const placeOrderAPI = async (paymentType) => {
       {/* 🧾 Checkout Modal */}
       <AnimatePresence>
         {showCheckoutModal && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, y: 50 }}
               animate={{ scale: 1, y: 0 }}
               className="bg-white rounded-[2.5rem] w-full max-w-xl shadow-2xl relative overflow-hidden"
@@ -513,7 +569,7 @@ const placeOrderAPI = async (paymentType) => {
                 <div className="space-y-6">
                   <div>
                     <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 block">Delivery Address</label>
-                    <textarea 
+                    <textarea
                       value={deliveryAddress}
                       onChange={(e) => setDeliveryAddress(e.target.value)}
                       className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none transition-all font-medium text-gray-700 min-h-[100px]"
@@ -523,7 +579,7 @@ const placeOrderAPI = async (paymentType) => {
 
                   <div>
                     <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 block">Mobile Number</label>
-                    <input 
+                    <input
                       type="text"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
@@ -534,7 +590,7 @@ const placeOrderAPI = async (paymentType) => {
 
                   <div>
                     <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 block">Special Instructions</label>
-                    <textarea 
+                    <textarea
                       value={specialInstruction}
                       onChange={(e) => setSpecialInstruction(e.target.value)}
                       className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none transition-all font-medium text-gray-700 min-h-[100px]"
@@ -567,14 +623,14 @@ const placeOrderAPI = async (paymentType) => {
                   <div>
                     <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-4 block">Select Payment Method</label>
                     <div className="grid grid-cols-2 gap-4">
-                      <button 
+                      <button
                         onClick={() => setPaymentMethod("cash")}
                         className={`p-6 rounded-[1.5rem] border-2 flex flex-col items-center gap-2 transition-all ${paymentMethod === 'cash' ? 'border-red-600 bg-red-50' : 'border-gray-100 bg-gray-50 opacity-60'}`}
                       >
                         <span className="text-2xl">💵</span>
                         <span className={`text-xs font-black uppercase tracking-widest ${paymentMethod === 'cash' ? 'text-red-700' : 'text-gray-400'}`}>Cash</span>
                       </button>
-                      <button 
+                      <button
                         onClick={() => setPaymentMethod("online")}
                         className={`p-6 rounded-[1.5rem] border-2 flex flex-col items-center gap-2 transition-all ${paymentMethod === 'online' ? 'border-red-600 bg-red-50' : 'border-gray-100 bg-gray-50 opacity-60'}`}
                       >
@@ -588,13 +644,13 @@ const placeOrderAPI = async (paymentType) => {
 
               {/* Modal Footer */}
               <div className="p-8 bg-gray-50 flex gap-4">
-                <button 
+                <button
                   onClick={() => setShowCheckoutModal(false)}
                   className="flex-1 py-4 text-gray-500 font-bold text-sm uppercase tracking-widest hover:text-gray-900 transition-colors"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={confirmOrder}
                   className="flex-3 bg-red-600 text-white px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-red-200 hover:bg-red-700 transition-all"
                 >
@@ -609,26 +665,26 @@ const placeOrderAPI = async (paymentType) => {
       {/* 🎉 Success Overlay */}
       <AnimatePresence>
         {showSuccess && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.5, y: 100 }}
               animate={{ scale: 1, y: 0 }}
               className="bg-white rounded-[2.5rem] p-12 text-center max-w-sm w-full shadow-2xl relative overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-emerald-500" />
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", delay: 0.2 }}
                 className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
               >
-                <motion.span 
-                  animate={{ scale: [1, 1.2, 1] }} 
+                <motion.span
+                  animate={{ scale: [1, 1.2, 1] }}
                   transition={{ repeat: Infinity, duration: 2 }}
                   className="text-5xl"
                 >
@@ -637,10 +693,10 @@ const placeOrderAPI = async (paymentType) => {
               </motion.div>
               <h2 className="text-3xl font-black text-gray-900 mb-2">Order Success!</h2>
               <p className="text-gray-500 font-medium">Your food is about to start its journey. Redirecting to tracking...</p>
-              
+
               <div className="mt-8 flex justify-center gap-2">
                 {[0, 1, 2].map(i => (
-                  <motion.div 
+                  <motion.div
                     key={i}
                     animate={{ y: [0, -10, 0] }}
                     transition={{ repeat: Infinity, duration: 0.6, delay: i * 0.2 }}

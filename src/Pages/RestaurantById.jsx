@@ -10,35 +10,34 @@ const RestaurantById = () => {
     const [dishes, setDishes] = useState([]);
     const [menu, setMenu] = useState([]);
     const [allRestaurants, setAllRestaurants] = useState([]);
+    const [page, setPage] = useState(1);
+    const [pages, setPages] = useState(1);
+    const [loading, setLoading] = useState(false);
 
-    const handleResMenu = async () => {
+    const fetchRestaurantDishes = async (next = false) => {
         try {
-            // Using search filter for restaurant specific dishes
-            const response = await axios.get(`${import.meta.env.VITE_URL}/search/filter?restaurantId=${res_id}&cuisineTypes=${type}`);
+            setLoading(true);
+            const pageToFetch = next ? page + 1 : 1;
+            const response = await axios.get(`${import.meta.env.VITE_URL}/search/filter?restaurantId=${res_id}&cuisineTypes=${type}&page=${pageToFetch}&limit=9`);
             if (response.status === 200) {
-                setMenu(response.data.data);
+                const items = response.data.data || [];
+                setDishes((prev) => next ? [...prev, ...items] : items);
+                setMenu((prev) => next ? [...prev, ...items] : items);
+                setPage(response.data.pagination?.page || pageToFetch);
+                setPages(response.data.pagination?.pages || 1);
             }
         } catch (error) {
-            console.error("Error fetching menu:", error);
-        }
-    };
-
-    const handleDishesById = async () => {
-        try {
-            const response = await axios.get(`${import.meta.env.VITE_URL}/search/filter?restaurantId=${res_id}&cuisineTypes=${type}`);
-            if (response.status === 200) {
-                setDishes(response.data.data);
-            }
-        } catch (error) {
-            console.error("Error fetching dish:", error);
+            console.error("Error fetching restaurant dishes:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleAllRestaurantsByType = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_URL}/restaurants/${type}`);
+            const response = await axios.get(`${import.meta.env.VITE_URL}/restaurants/${type}?page=1&limit=8`);
             if (response.status === 200) {
-                setAllRestaurants(response.data.data);
+                setAllRestaurants(response.data.data || []);
             }
         } catch (error) {
             console.error("Error fetching all restaurants:", error);
@@ -46,8 +45,7 @@ const RestaurantById = () => {
     };
 
     useEffect(() => {
-        handleDishesById();
-        handleResMenu();
+        fetchRestaurantDishes();
         handleAllRestaurantsByType();
     }, [type, res_id]);
 
@@ -60,11 +58,22 @@ const RestaurantById = () => {
                     <Menu menu={menu} />
                 </div>
                 <div className="w-full md:w-3/4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {dishes.slice(0, 9).map((dish, index) => (
-                        <DishCard key={index} {...dish} />
+                    {dishes.map((dish, index) => (
+                        <DishCard key={dish.dish_id || index} {...dish} />
                     ))}
                 </div>
             </div>
+            {page < pages && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={() => fetchRestaurantDishes(true)}
+                  className="px-6 py-3 rounded-full bg-blue-600 text-white font-bold uppercase tracking-wider text-xs shadow-lg hover:bg-blue-700 transition-all"
+                  disabled={loading}
+                >
+                  {loading ? 'Loading...' : 'See More Dishes'}
+                </button>
+              </div>
+            )}
             <h2 className="text-red-900 font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl text-center mt-8 sm:mt-10 md:mt-12 mb-4 sm:mb-6">Similar Restaurants</h2>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {allRestaurants.map((restaurant, index) => (

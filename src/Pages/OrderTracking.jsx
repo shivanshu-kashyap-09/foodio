@@ -24,6 +24,7 @@ const OrderTracking = () => {
         { key: 'pending', label: 'Order Placed', icon: <FaBox />, color: 'bg-blue-500' },
         { key: 'confirmed', label: 'Confirmed', icon: <FaCheckCircle />, color: 'bg-purple-500' },
         { key: 'preparing', label: 'Kitchen Preparing', icon: <FaUtensils />, color: 'bg-orange-500' },
+        { key: 'picked', label: 'Picked Up', icon: <FaStore />, color: 'bg-amber-500' },
         { key: 'out_for_delivery', label: 'Out for Delivery', icon: <FaTruck />, color: 'bg-yellow-500' },
         { key: 'delivered', label: 'Delivered', icon: <FaHome />, color: 'bg-green-500' }
     ];
@@ -182,12 +183,28 @@ const OrderTracking = () => {
                                     className="w-16 h-16 rounded-2xl bg-red-50"
                                 />
                                 <div>
-                                    <p className="font-bold text-gray-900 text-lg">Aryan Sharma</p>
-                                    <p className="text-gray-500 font-medium text-sm">Your reliable delivery partner</p>
-                                    <div className="flex items-center gap-4 mt-2">
-                                        <button className="text-red-600 font-bold text-xs underline underline-offset-4">Call Rider</button>
-                                        <button className="text-red-600 font-bold text-xs underline underline-offset-4">Message</button>
-                                    </div>
+                                    <p className="font-bold text-gray-900 text-lg">{tracking?.delivery?.partnerName || 'Assigning Partner...'}</p>
+                                    <p className="text-gray-500 font-medium text-sm">
+                                        {tracking?.delivery?.partnerName ? 'Your reliable delivery partner' : 'Searching for nearby partners...'}
+                                    </p>
+                                    {tracking?.delivery?.partnerPhone && (
+                                        <div className="flex items-center gap-4 mt-2">
+                                            <a href={`tel:${tracking.delivery.partnerPhone}`} className="text-red-600 font-bold text-xs underline underline-offset-4">Call Rider</a>
+                                            <button className="text-red-600 font-bold text-xs underline underline-offset-4">Message</button>
+                                        </div>
+                                    )}
+                                    {tracking?.delivery?.borzoTrackingUrl && (
+                                        <div className="mt-4">
+                                            <a 
+                                                href={tracking.delivery.borzoTrackingUrl} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="inline-block bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-md hover:bg-red-700 transition"
+                                            >
+                                                Track Internally via Borzo
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </motion.div>
@@ -235,7 +252,13 @@ const OrderTracking = () => {
 
                         <div className="absolute bottom-6 left-6 right-6 bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 text-white">
                             <p className="text-xs font-black uppercase tracking-widest opacity-80 mb-1">Status</p>
-                            <p className="font-bold text-lg">Rider is 1.2km away from your kitchen</p>
+                            <p className="font-bold text-lg">
+                                {tracking?.order?.status === 'out_for_delivery' 
+                                    ? `Rider is ${tracking?.delivery?.distance || '1.2'}km away from your location`
+                                    : tracking?.order?.status === 'delivered'
+                                    ? 'Order has been delivered! Enjoy your meal 🍕'
+                                    : 'Preparing your order at the restaurant...'}
+                            </p>
                         </div>
                     </div>
                 </div>
