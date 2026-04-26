@@ -193,18 +193,6 @@ const OrderTracking = () => {
                                             <button className="text-red-600 font-bold text-xs underline underline-offset-4">Message</button>
                                         </div>
                                     )}
-                                    {tracking?.delivery?.borzoTrackingUrl && (
-                                        <div className="mt-4">
-                                            <a 
-                                                href={tracking.delivery.borzoTrackingUrl} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="inline-block bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-md hover:bg-red-700 transition"
-                                            >
-                                                Track Internally via Borzo
-                                            </a>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         </motion.div>

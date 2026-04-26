@@ -16,7 +16,8 @@ const DishCard = ({
   dish_desc,
   dish_price, 
   dish_rating,
-  menuType = 'veg'
+  menuType = 'veg',
+  onEdit
 }) => {
   const final_dish_image = dish_image || dish_img;
   const final_dish_description = dish_description || dish_desc;
@@ -79,6 +80,7 @@ const DishCard = ({
 
       if (response.status === 200) {
         toast.success("Dish updated successfully");
+        if (onEdit) onEdit({ ...updatedDish, dish_id: final_dish_id, id: final_dish_id });
       }
     } catch (error) {
       console.error(error);
@@ -213,6 +215,7 @@ const DishCard = ({
 
               if (res.status === 200) {
                 toast.success("Dish updated successfully");
+                if (onEdit) onEdit({ ...updatedDish, dish_id: final_dish_id, id: final_dish_id });
                 setShowModal(false);
               }
             } catch (err) {

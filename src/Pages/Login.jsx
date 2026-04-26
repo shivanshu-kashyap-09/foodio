@@ -34,7 +34,15 @@ const Login = () => {
                 localStorage.setItem("role", user.role);
 
                 toast.success("Login Successful! Welcome back.");
-                navigate('/');
+                if (user.role === 'admin' || user.role === 'SUPER_ADMIN') {
+                    navigate('/super-admin');
+                } else if (user.role === 'restaurant') {
+                    navigate('/restaurant/dashboard');
+                } else if (user.role === 'delivery') {
+                    navigate('/delivery');
+                } else {
+                    navigate('/');
+                }
             }
         } catch (error) {
             if (error.response) {

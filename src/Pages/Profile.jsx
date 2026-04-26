@@ -120,16 +120,18 @@ const Profile = () => {
       return URL.createObjectURL(user.user_img);
     }
     if (typeof user.user_img === 'string') {
-      return user.user_img.startsWith('http')
-        ? user.user_img
-        : `${import.meta.env.VITE_URL}${user.user_img}`;
+      if (user.user_img.startsWith('http')) return user.user_img;
+      const cleanPath = user.user_img.includes('uploads') 
+        ? '/uploads/' + user.user_img.split('uploads').pop().replace(/\\/g, '/').replace(/^\//, '') 
+        : user.user_img;
+      return `${import.meta.env.VITE_URL.replace('/api', '')}${cleanPath}?t=${Date.now()}`;
     }
     return "https://static.vecteezy.com/system/resources/previews/002/002/403/non_2x/man-with-beard-avatar-character-isolated-icon-free-vector.jpg";
   };
 
   return (
     <div className="min-h-screen bg-gray-100 pt-22 pb-6 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-6 sm:gap-8 lg:gap-10 max-w-7xl mx-auto">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="bg-white shadow-2xl rounded-[2.5rem] p-8 sm:p-10 w-full md:w-1/2 border border-gray-50 relative overflow-hidden"
@@ -269,7 +271,7 @@ const Profile = () => {
               {order.map((item) => {
                 const isActive = !['delivered', 'cancelled'].includes(item.status?.toLowerCase());
                 return (
-                  <motion.div 
+                  <motion.div
                     key={item.order_id}
                     whileHover={{ y: -5 }}
                     className={`p-6 rounded-3xl border-2 transition-all ${isActive ? 'border-red-100 bg-red-50/30 shadow-red-50' : 'border-gray-50 bg-white hover:border-gray-100'}`}

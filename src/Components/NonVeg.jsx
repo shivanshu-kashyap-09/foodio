@@ -3,20 +3,70 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DishCard from './DishCard';
 import { FaFilter, FaSearch, FaChevronRight, FaTimes } from 'react-icons/fa';
 import Filter from '../Components/Filter';
+import axios from 'axios';
 
 const NonVeg = ({ nonVegDish }) => {
   const [filter, setFilter] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState({ price: '', rating: '', delivery: '' });
-  const [visibleCount, setVisibleCount] = useState(12);
+  const [dishes, setDishes] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loading, setLoading] = useState(true);
   const filterRef = useRef(null);
   const searchRef = useRef(null);
 
-  const displayItems = useMemo(() => {
-    if (!Array.isArray(nonVegDish)) return [];
+  // Update local dishes when props arrive (for initial load)
+  useEffect(() => {
+    if (nonVegDish && nonVegDish.length > 0 && dishes.length === 0) {
+      setDishes(nonVegDish);
+      setLoading(false);
+      setHasMore(nonVegDish.length >= 12);
+    } else if (nonVegDish && nonVegDish.length === 0) {
+      setLoading(false);
+    }
+  }, [nonVegDish]);
+
+  const handleSeeMore = async () => {
+    if (loadingMore || !hasMore) return;
     
-    let filtered = nonVegDish.map(dish => ({
+    console.log(`Fetching more Non-Veg dishes for ${currentPage + 1}...`);
+    setLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      const response = await axios.get(`${import.meta.env.VITE_URL}/menus/nonveg?page=${nextPage}&limit=12`);
+      
+      if (response.status === 200 && response.data.success) {
+        const newItems = response.data.data;
+        console.log("New items fetched:", newItems?.length || 0);
+
+        if (!newItems || newItems.length === 0) {
+          setHasMore(false);
+        } else {
+          setDishes(prev => {
+            const existingIds = new Set(prev.map(d => d.dish_id || d.id));
+            const uniqueNew = newItems.filter(d => !existingIds.has(d.dish_id || d.id));
+            const updated = [...prev, ...uniqueNew];
+            console.log("Total Non-Veg dishes in state now:", updated.length);
+            return updated;
+          });
+          setCurrentPage(nextPage);
+          if (newItems.length < 12) setHasMore(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading more non-veg dishes:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const displayItems = useMemo(() => {
+    if (!Array.isArray(dishes)) return [];
+    
+    let filtered = dishes.map(dish => ({
       ...dish,
       restaurant_id: dish.res_id || dish.restaurant_id || 3
     }));
@@ -50,7 +100,7 @@ const NonVeg = ({ nonVegDish }) => {
     }
 
     return filtered;
-  }, [nonVegDish, searchQuery, activeFilters]);
+  }, [dishes, searchQuery, activeFilters]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -175,7 +225,29 @@ const NonVeg = ({ nonVegDish }) => {
 
         {/* Dynamic Grid */}
         <AnimatePresence mode="popLayout">
-          {displayItems.length > 0 ? (
+          {loading ? (
+            <motion.div
+              key="skeleton-loader"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8"
+            >
+              {[...Array(8)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-[260px] rounded-2xl bg-gray-100 animate-pulse flex flex-col overflow-hidden"
+                >
+                  <div className="h-[60%] bg-gray-200"></div>
+                  <div className="p-4 space-y-3">
+                    <div className="h-3 w-3/4 bg-gray-200 rounded"></div>
+                    <div className="h-3 w-1/2 bg-gray-200 rounded"></div>
+                    <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          ) : displayItems.length > 0 ? (
             <motion.div
               key="actual-data"
               layout
@@ -186,7 +258,7 @@ const NonVeg = ({ nonVegDish }) => {
               viewport={{ once: true, margin: "-100px" }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8"
             >
-              {displayItems.slice(0, visibleCount).map((dish) => (
+              {displayItems.map((dish) => (
                 <motion.div
                   key={dish.dish_id || dish.id}
                   layout
@@ -223,18 +295,19 @@ const NonVeg = ({ nonVegDish }) => {
         </AnimatePresence>
 
         {/* View All Action */}
-        {!searchQuery && displayItems.length > visibleCount && visibleCount < 20 && (
+        {!searchQuery && hasMore && (
           <motion.div 
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             className="mt-16 flex justify-center"
           >
             <button
-              onClick={() => setVisibleCount(20)}
-              className="group flex items-center gap-4 px-10 py-5 bg-white border-2 border-gray-100 rounded-full font-black text-xs uppercase tracking-widest text-gray-600 hover:border-red-600 hover:text-red-600 transition-all shadow-sm"
+              onClick={handleSeeMore}
+              disabled={loadingMore}
+              className="group flex items-center gap-4 px-10 py-5 bg-white border-2 border-gray-100 rounded-full font-black text-xs uppercase tracking-widest text-gray-600 hover:border-red-600 hover:text-red-600 transition-all shadow-sm disabled:opacity-50"
             >
-              Explore More Non-Veg
-              <FaChevronRight className="group-hover:translate-x-1 transition-transform" />
+              {loadingMore ? 'Loading...' : 'Explore More Non-Veg'}
+              {!loadingMore && <FaChevronRight className="group-hover:translate-x-1 transition-transform" />}
             </button>
           </motion.div>
         )}
