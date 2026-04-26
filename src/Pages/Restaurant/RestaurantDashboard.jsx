@@ -36,13 +36,17 @@ const RestaurantDashboard = () => {
         dish_rating: 4.5
     });
 
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingDish, setEditingDish] = useState(null);
+
     const user = JSON.parse(localStorage.getItem('user'));
 
     const [analytics, setAnalytics] = useState([]);
     const [trendingDishes, setTrendingDishes] = useState([]);
     const [orderTrends, setOrderTrends] = useState([]);
 
-    const [aiInsights, setAiInsights] = useState([]);
+    const [aiInsights, setAiInsights] = useState({ growth_pct: 0, insights: [] });
+    const [aiLoading, setAiLoading] = useState(false);
 
     useEffect(() => {
         fetchAllData();
@@ -50,33 +54,38 @@ const RestaurantDashboard = () => {
 
     const fetchAllData = async () => {
         setLoading(true);
-        try {
-            const config = {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            };
-            const [summaryRes, ordersRes, dishesRes, analyticsRes, trendingRes, trendsRes, aiRes] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/summary`, config),
-                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/orders`, config),
-                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/dishes/${dishType}`, config),
-                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/analytics`, config),
-                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/trending`, config),
-                axios.get(`${import.meta.env.VITE_URL}/restaurant/dashboard/trends`, config),
-                axios.get(`${import.meta.env.VITE_URL.replace('/user', '')}/ai/insights`, config)
-            ]);
+        const config = {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        };
 
-            if (summaryRes.data.success) setSummary(summaryRes.data.data);
-            if (ordersRes.data.success) setOrders(ordersRes.data.data);
-            if (dishesRes.data.success) setDishes(dishesRes.data.data);
-            if (analyticsRes.data.success) setAnalytics(analyticsRes.data.data);
-            if (trendingRes.data.success) setTrendingDishes(trendingRes.data.data);
-            if (trendsRes.data.success) setOrderTrends(trendsRes.data.data);
-            if (aiRes.data.success) setAiInsights(aiRes.data.data);
-        } catch (error) {
-            console.error('Dashboard Error:', error);
-            toast.error("Failed to load dashboard data");
-        } finally {
-            setLoading(false);
+        const tryFetch = async (url, setter) => {
+            try {
+                const res = await axios.get(url, config);
+                if (res.data.success) setter(res.data.data);
+            } catch (err) {
+                console.error(`Failed to fetch from ${url}:`, err);
+            }
+        };
+
+        // Basic Data
+        await Promise.all([
+            tryFetch(`${import.meta.env.VITE_URL}/restaurant/dashboard/summary`, setSummary),
+            tryFetch(`${import.meta.env.VITE_URL}/restaurant/dashboard/orders`, setOrders),
+            tryFetch(`${import.meta.env.VITE_URL}/restaurant/dashboard/dishes/${dishType}`, setDishes),
+            tryFetch(`${import.meta.env.VITE_URL}/restaurant/dashboard/analytics`, setAnalytics),
+            tryFetch(`${import.meta.env.VITE_URL}/restaurant/dashboard/trending`, setTrendingDishes),
+            tryFetch(`${import.meta.env.VITE_URL}/restaurant/dashboard/trends`, setOrderTrends),
+        ]);
+
+        // Specific AI Fetch with separate loading
+        if (activeTab === 'ai-insights' || activeTab === 'overview') {
+            setAiLoading(true);
+            const baseUrl = import.meta.env.VITE_URL.replace(/\/user$/, '').replace(/\/$/, '');
+            await tryFetch(`${baseUrl}/ai/insights`, setAiInsights);
+            setAiLoading(false);
         }
+
+        setLoading(false);
     };
 
     const handleUpdateStatus = async (orderId, newStatus, reason = null) => {
@@ -115,6 +124,65 @@ const RestaurantDashboard = () => {
             }
         } catch (err) {
             toast.error("Failed to add dish");
+        }
+    };
+
+    const handleEditDish = (dish) => {
+        setEditingDish(dish);
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdateDish = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await axios.put(`${import.meta.env.VITE_URL}/restaurant/dashboard/update-dish/${editingDish.dish_id}`, {
+                ...editingDish,
+                type: dishType
+            }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            if (res.data.success) {
+                toast.success("Dish updated successfully!");
+                setIsEditModalOpen(false);
+                setEditingDish(null);
+                fetchAllData();
+            }
+        } catch (err) {
+            toast.error("Failed to update dish");
+        }
+    };
+
+    const handleDeleteDish = async (dishId) => {
+        if (!window.confirm("Are you sure you want to delete this dish?")) return;
+        try {
+            const res = await axios.delete(`${import.meta.env.VITE_URL}/restaurant/dashboard/delete-dish/${dishId}`, {
+                data: { type: dishType }, // Pass type in body for delete
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            if (res.data.success) {
+                toast.success("Dish deleted from menu");
+                fetchAllData();
+            }
+        } catch (err) {
+            toast.error("Failed to delete dish");
+        }
+    };
+
+    const handleInsightAction = (action) => {
+        const normalizedAction = action.toLowerCase();
+        if (normalizedAction.includes('add dish')) {
+            setIsAddModalOpen(true);
+        } else if (normalizedAction.includes('view menu') || normalizedAction.includes('optimize images')) {
+            setActiveTab('menu');
+        } else if (normalizedAction.includes('orders') || normalizedAction.includes('trend')) {
+            setActiveTab('orders');
+        } else if (normalizedAction.includes('refresh')) {
+            fetchAllData();
+        } else if (normalizedAction.includes('offer') || normalizedAction.includes('promotion')) {
+            toast.success("AI Strategy applied! You can now create a discount from the Menu tab.");
+            setActiveTab('menu');
+        } else {
+            toast.info(`Strategy "${action}" is being updated in your profile!`);
         }
     };
 
@@ -441,8 +509,18 @@ const RestaurantDashboard = () => {
                                             </div>
                                             <p className="text-[10px] text-gray-400 font-bold mb-6 line-clamp-2 leading-relaxed">{dish.dish_description}</p>
                                             <div className="flex gap-2">
-                                                <button className="flex-1 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Edit Dish</button>
-                                                <button className="p-3 bg-red-50 hover:bg-red-100 text-red-500 rounded-xl transition-all"><FaEllipsisV className="text-[10px]" /></button>
+                                                <button 
+                                                    onClick={() => handleEditDish(dish)}
+                                                    className="flex-1 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                                >
+                                                    Edit Dish
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDeleteDish(dish.dish_id)}
+                                                    className="p-3 bg-red-50 hover:bg-red-100 text-red-500 rounded-xl transition-all"
+                                                >
+                                                    <FaPlus className="text-[10px] rotate-45" />
+                                                </button>
                                             </div>
                                         </div>
                                     </motion.div>
@@ -472,25 +550,35 @@ const RestaurantDashboard = () => {
                                             <h3 className="text-white font-black uppercase tracking-widest text-lg">AI Sales Optimizer</h3>
                                         </div>
                                         <h2 className="text-3xl text-white font-black mb-10 leading-snug">
-                                            Your revenue could grow by <span className="text-red-500 underline underline-offset-8">23%</span> next month.
+                                            Your revenue could grow by <span className="text-red-500 underline underline-offset-8">{aiInsights.growth_pct || 23}%</span> next month.
                                         </h2>
                                         
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            {(aiInsights && aiInsights.length > 0 ? aiInsights : [
-                                                { title: 'AI Warming Up', text: 'Place more orders to get deep data-driven insights.', action: 'Refresh' },
-                                                { title: 'Inventory Alert', text: 'AI is monitoring your stock levels in real-time.', action: 'View Stock' },
-                                                { title: 'Combo Strategy', text: 'Discover which dishes sell better together.', action: 'Create Combo' },
-                                                { title: 'Price Optimization', text: 'Real-time price suggestions will appear here.', action: 'Check Prices' }
-                                            ]).map((insight, idx) => (
-                                                <div key={idx} className="bg-white/5 backdrop-blur p-6 rounded-[2rem] border border-white/10 group hover:bg-white/10 transition-all">
-                                                    <h4 className="text-red-500 text-xs font-black uppercase tracking-widest mb-3">{insight.title}</h4>
-                                                    <p className="text-gray-400 text-xs font-bold leading-relaxed mb-6">{insight.text}</p>
-                                                    <button className="w-full py-3 bg-white text-gray-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">
-                                                        {insight.action}
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
+                                        {aiLoading ? (
+                                            <div className="flex flex-col items-center justify-center py-20 bg-white/5 rounded-[2rem] border border-white/10">
+                                                <div className="w-10 h-10 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                                                <p className="text-gray-400 text-xs font-black uppercase tracking-widest animate-pulse">AI is thinking...</p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {(aiInsights.insights && aiInsights.insights.length > 0 ? aiInsights.insights : [
+                                                    { title: 'AI Warming Up', text: 'Place more orders to get deep data-driven insights.', action: 'Refresh' },
+                                                    { title: 'Inventory Alert', text: 'AI is monitoring your stock levels in real-time.', action: 'View Stock' },
+                                                    { title: 'Combo Strategy', text: 'Discover which dishes sell better together.', action: 'Create Combo' },
+                                                    { title: 'Price Optimization', text: 'Real-time price suggestions will appear here.', action: 'Check Prices' }
+                                                ]).map((insight, idx) => (
+                                                    <div key={idx} className="bg-white/5 backdrop-blur p-6 rounded-[2rem] border border-white/10 group hover:bg-white/10 transition-all">
+                                                        <h4 className="text-red-500 text-xs font-black uppercase tracking-widest mb-3">{insight.title}</h4>
+                                                        <p className="text-gray-400 text-xs font-bold leading-relaxed mb-6">{insight.text}</p>
+                                                        <button 
+                                                            onClick={() => handleInsightAction(insight.action)}
+                                                            className="w-full py-3 bg-white text-gray-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
+                                                        >
+                                                            {insight.action}
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
 
                                     </div>
                                 </div>
@@ -648,6 +736,85 @@ const RestaurantDashboard = () => {
                                         type="submit"
                                         className="flex-[2] py-4 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-red-100 hover:bg-red-700 transition-all"
                                     >Add to Menu</button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Edit Dish Modal */}
+            <AnimatePresence>
+                {isEditModalOpen && editingDish && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsEditModalOpen(false)}
+                            className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
+                        ></motion.div>
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden border border-gray-100"
+                        >
+                            <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-10 text-white">
+                                <h3 className="text-2xl font-black uppercase tracking-widest mb-2">Edit Dish</h3>
+                                <p className="text-blue-100 text-xs font-bold">Update details for {editingDish.dish_name}.</p>
+                            </div>
+                            <form onSubmit={handleUpdateDish} className="p-10 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-1">Dish Name</label>
+                                        <input 
+                                            required
+                                            value={editingDish.dish_name}
+                                            onChange={(e) => setEditingDish({...editingDish, dish_name: e.target.value})}
+                                            className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-1">Price (₹)</label>
+                                        <input 
+                                            required
+                                            type="number"
+                                            value={editingDish.dish_price}
+                                            onChange={(e) => setEditingDish({...editingDish, dish_price: e.target.value})}
+                                            className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-1">Description</label>
+                                    <textarea 
+                                        required
+                                        rows="3"
+                                        value={editingDish.dish_description}
+                                        onChange={(e) => setEditingDish({...editingDish, dish_description: e.target.value})}
+                                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all outline-none resize-none"
+                                    ></textarea>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-1">Image URL</label>
+                                    <input 
+                                        required
+                                        value={editingDish.dish_image}
+                                        onChange={(e) => setEditingDish({...editingDish, dish_image: e.target.value})}
+                                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                                    />
+                                </div>
+                                <div className="flex gap-4 pt-4">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setIsEditModalOpen(false)}
+                                        className="flex-1 py-4 bg-gray-50 text-gray-400 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-gray-100 transition-all"
+                                    >Cancel</button>
+                                    <button 
+                                        type="submit"
+                                        className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all"
+                                    >Update Dish</button>
                                 </div>
                             </form>
                         </motion.div>

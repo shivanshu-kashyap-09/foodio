@@ -34,9 +34,7 @@ const Cart = () => {
   const [phoneNumber, setPhoneNumber] = useState(USER?.user_phone || "");
   const [specialInstruction, setSpecialInstruction] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [deliveryCharge, setDeliveryCharge] = useState(50); // State for dynamic delivery fee
-  const [borzoOrderDetails, setBorzoOrderDetails] = useState(null);
-  const [isCalculatingDelivery, setIsCalculatingDelivery] = useState(false);
+  const [deliveryCharge, setDeliveryCharge] = useState(50);
 
 
   // 🔥 map menu type → API
@@ -154,60 +152,9 @@ const Cart = () => {
   const navigate = useNavigate();
 
   const handleOrder = async () => {
-    // 🔥 Calculate Borzo Delivery Price before opening modal
-    if (deliveryAddress && cartItems.length > 0) {
-      await calculateBorzoDelivery();
-    }
     setShowCheckoutModal(true);
   };
 
-  const calculateBorzoDelivery = async () => {
-    try {
-      setIsCalculatingDelivery(true);
-      const restaurantId = cartItems[0]?.restaurant_id;
-      const restaurantType = cartItems[0]?.dish_type;
-
-      // 1. Get Restaurant Address
-      const restRes = await axios.get(`${API}/restaurants/${restaurantType}/${restaurantId}`);
-      const restaurant = restRes.data.data;
-
-      // 2. Call Borzo Calculate API
-      const borzoRes = await axios.post(`${API}/delivery/borzo/calculate`, {
-        points: [
-          {
-            address: restaurant?.location || restaurant?.restaurant_address || restaurant?.address || "Haridwar, Uttarakhand, India",
-            phone: restaurant?.phone || restaurant?.restaurant_phone || "919876543211",
-            name: restaurant?.name || restaurant?.restaurant_name || "Foodio Restaurant"
-          },
-          {
-            address: deliveryAddress,
-            phone: phoneNumber,
-            name: USER?.user_name
-          }
-        ]
-      }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-
-      console.log("========= BORZO CALCULATE FRONTEND RESPONSE =========", borzoRes.data);
-
-      if (borzoRes.data.success) {
-        // Borzo returns the data inside order object: { is_successful: true, order: { payment_amount: "..." } }
-        const borzoOrderData = borzoRes.data.data;
-        const fee = parseFloat(borzoOrderData?.order?.delivery_fee_amount || borzoOrderData?.order?.payment_amount || 0);
-        console.log("========= BORZO EXTRACTED FEE =========", fee);
-        
-        setDeliveryCharge(fee > 0 ? fee : 50);
-        setBorzoOrderDetails(borzoOrderData);
-      }
-    } catch (err) {
-      console.error("========= BORZO CALCULATE FRONTEND ERROR =========", err?.response?.data || err.message);
-      // Fallback to default
-      setDeliveryCharge(50);
-    } finally {
-      setIsCalculatingDelivery(false);
-    }
-  };
 
   const confirmOrder = async () => {
     setShowCheckoutModal(false);
@@ -334,42 +281,6 @@ const Cart = () => {
         // toast.success("Order placed successfully 🎉");
         showPremiumToast("Order placed successfully! 🎉", "success");
 
-        // Create Borzo Delivery Order
-        try {
-          const restaurantId = cartItems[0]?.restaurant_id;
-          const restaurantType = cartItems[0]?.dish_type;
-          const restRes = await axios.get(`${API}/restaurants/${restaurantType}/${restaurantId}`);
-          const restaurant = restRes.data.data;
-
-          const borzoResp = await axios.post(`${API}/delivery/borzo/create`, {
-            localOrderId: orderId,
-            orderData: {
-              matter: `Order #FD-${orderId} - Foodio Delivery`,
-              points: [
-                {
-                  address: restaurant?.location || restaurant?.restaurant_address || restaurant?.address || "Haridwar, Uttarakhand, India",
-                  contact_person: { 
-                    phone: restaurant?.phone || restaurant?.restaurant_phone || "919876543211", 
-                    name: restaurant?.name || restaurant?.restaurant_name || "Foodio Restaurant" 
-                  },
-                  note: "Pick up the food from the counter."
-                },
-                {
-                  address: deliveryAddress,
-                  contact_person: { phone: phoneNumber, name: USER?.user_name },
-                  note: specialInstruction
-                }
-              ]
-            }
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          console.log("========= BORZO FRONTEND SUCCESS =========", borzoResp.data);
-          toast.info("Delivery partner assigned 🚚");
-        } catch (borzoError) {
-          console.error("========= BORZO FRONTEND ERROR =========", borzoError?.response?.data || borzoError.message);
-          toast.warning("Manual delivery assignment may be needed.");
-        }
 
         // 🔥 clear cart
         try {
@@ -427,12 +338,6 @@ const Cart = () => {
     handleGetCart();
   }, []);
 
-  // 🚚 Auto-calculate delivery when address or cart changes
-  useEffect(() => {
-    if (cartItems.length > 0 && deliveryAddress && phoneNumber) {
-      calculateBorzoDelivery();
-    }
-  }, [deliveryAddress, phoneNumber, cartItems.length]);
 
   // Sync user details if they change or are missing
   useEffect(() => {
@@ -609,7 +514,7 @@ const Cart = () => {
                         <span>₹{itemTotal.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-sm text-orange-900/70 font-bold">
-                        <span>Delivery {isCalculatingDelivery ? '(Calculating...)' : '(Borzo)'}</span>
+                        <span>Delivery</span>
                         <span>₹{deliveryCharge.toFixed(2)}</span>
                       </div>
                       <div className="pt-3 mt-3 border-t border-orange-200/50 flex justify-between text-lg text-orange-900 font-black">

@@ -22,6 +22,7 @@ import SearchResults from './Pages/SearchResults';
 import AdminDashboard from './Pages/Admin/AdminDashboard';
 import DeliveryDashboard from './Pages/Delivery/DeliveryDashboard';
 import RestaurantDashboard from './Pages/Restaurant/RestaurantDashboard';
+import SuperAdminDashboard from './Pages/SuperAdmin/SuperAdminDashboard';
 import AIChatbot from './Components/AIChatbot/AIChatbot';
 import { ToastContainer } from 'react-toastify';
 
@@ -74,6 +75,7 @@ const App = () => {
           <Route path='/delivery' element={<DeliveryDashboard />} />
           <Route path='/restaurant/dashboard' element={<RestaurantDashboard />} />
         </Route>
+        <Route path='/super-admin' element={<SuperAdminDashboard />} />
       </Routes>
       {/* <AIChatbot /> */}
       <ToastContainer position="top-right" autoClose={3000} />

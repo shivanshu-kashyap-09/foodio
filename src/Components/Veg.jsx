@@ -10,16 +10,60 @@ const Veg = ({ vegDish }) => {
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState({ price: '', rating: '', delivery: '' });
-  const [visibleCount, setVisibleCount] = useState(12);
+  const [dishes, setDishes] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loading, setLoading] = useState(true);
   const filterRef = useRef(null);
   const searchRef = useRef(null);
-  const [loading, setLoading] = useState(true);
+
+  // Update local dishes when props arrive (for initial load)
+  useEffect(() => {
+    if (vegDish && vegDish.length > 0 && dishes.length === 0) {
+      setDishes(vegDish);
+      setLoading(false);
+      setHasMore(vegDish.length >= 12);
+    } else if (vegDish && vegDish.length === 0) {
+      setLoading(false);
+    }
+  }, [vegDish]);
+
+  const handleSeeMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      const response = await axios.get(`${import.meta.env.VITE_URL}/menus/veg?page=${nextPage}&limit=12`);
+      
+      if (response.status === 200 && response.data.success) {
+        const newItems = response.data.data;
+        
+        if (!newItems || newItems.length === 0) {
+          setHasMore(false);
+        } else {
+          setDishes(prev => {
+            const existingIds = new Set(prev.map(d => d.dish_id || d.id));
+            const uniqueNew = newItems.filter(d => !existingIds.has(d.dish_id || d.id));
+            const updated = [...prev, ...uniqueNew];
+            return updated;
+          });
+          setCurrentPage(nextPage);
+          if (newItems.length < 12) setHasMore(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading more veg dishes:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // Memoized filtered data for performance
   const displayItems = useMemo(() => {
-    if (!vegDish || vegDish.length === 0) return [];
+    if (!dishes || dishes.length === 0) return [];
 
-    let filtered = vegDish.map(dish => ({
+    let filtered = dishes.map(dish => ({
       ...dish,
       restaurant_id: dish.res_id || dish.restaurant_id || 2
     }));
@@ -53,7 +97,7 @@ const Veg = ({ vegDish }) => {
     }
 
     return filtered;
-  }, [vegDish, searchQuery, activeFilters]);
+  }, [dishes, searchQuery, activeFilters]);
 
   const handleDishUpdate = (updatedDish) => {
     // Parent handle update if passed, logic normally handled in Home.jsx via props
@@ -222,9 +266,9 @@ const Veg = ({ vegDish }) => {
               exit={{ opacity: 0 }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8"
             >
-              {displayItems.slice(0, visibleCount).map((dish, index) => (
+              {displayItems.map((dish) => (
                 <motion.div
-                  key={`${dish.dish_id || dish.id}-${index}`}   // ✅ FIXED KEY
+                  key={dish.dish_id || dish.id}
                   layout
                   variants={itemVariants}
                 >
@@ -270,18 +314,19 @@ const Veg = ({ vegDish }) => {
         </AnimatePresence>
 
         {/* View All Action */}
-        {!searchQuery && displayItems.length > visibleCount && visibleCount < 20 && (
+        {!searchQuery && hasMore && (
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             className="mt-16 flex justify-center"
           >
             <button
-              onClick={() => setVisibleCount(20)}
-              className="group flex items-center gap-4 px-10 py-5 bg-white border-2 border-gray-100 rounded-full font-black text-xs uppercase tracking-widest text-gray-600 hover:border-red-600 hover:text-red-600 transition-all shadow-sm"
+              onClick={handleSeeMore}
+              disabled={loadingMore}
+              className="group flex items-center gap-4 px-10 py-5 bg-white border-2 border-gray-100 rounded-full font-black text-xs uppercase tracking-widest text-gray-600 hover:border-red-600 hover:text-red-600 transition-all shadow-sm disabled:opacity-50"
             >
-              Explore More Dishes
-              <FaChevronRight className="group-hover:translate-x-1 transition-transform" />
+              {loadingMore ? 'Loading...' : 'Explore More Dishes'}
+              {!loadingMore && <FaChevronRight className="group-hover:translate-x-1 transition-transform" />}
             </button>
           </motion.div>
         )}

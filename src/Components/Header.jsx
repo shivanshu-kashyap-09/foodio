@@ -4,9 +4,9 @@ import logo from "../assets/logo.png";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import SearchBar from './SearchBar';
-import { 
-    FaUser, FaShoppingBag, FaHeart, FaHome, FaUtensils, FaPhoneAlt, 
-    FaSignOutAlt, FaUserCog, FaTachometerAlt, FaBars, FaTimes, FaSearch 
+import {
+    FaUser, FaShoppingBag, FaHeart, FaHome, FaUtensils, FaPhoneAlt,
+    FaSignOutAlt, FaUserCog, FaTachometerAlt, FaBars, FaTimes, FaSearch
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
@@ -27,6 +27,7 @@ const Header = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const USER_ID = localStorage.getItem('user_id');
+    const USER = localStorage.getItem('user');
     const headerRef = useRef(null);
     const dropdownRef = useRef(null);
 
@@ -132,7 +133,7 @@ const Header = () => {
 
     const navigateToDashboard = () => {
         const role = user?.role || user?.user_role;
-        if (role === 'admin') navigate("/admin");
+        if (role === 'admin' || role === 'SUPER_ADMIN') navigate("/super-admin");
         else if (role === 'delivery') navigate("/delivery");
         else if (role === 'restaurant') navigate("/restaurant/dashboard");
         else navigate("/profile");
@@ -150,9 +151,9 @@ const Header = () => {
 
     const isHomePage = location.pathname === "/";
     const headerStyle = (isScrolled || !isHomePage)
-        ? 'bg-white/80 backdrop-blur-xl shadow-lg border-b border-gray-100/50 py-1.5 sm:py-2.5' 
+        ? 'bg-white/80 backdrop-blur-xl shadow-lg border-b border-gray-100/50 py-1.5 sm:py-2.5'
         : 'bg-transparent py-3 sm:py-5';
-    
+
     const textColor = (isScrolled || !isHomePage) ? 'text-gray-800' : 'text-white';
     const brandColor = (isScrolled || !isHomePage) ? 'text-red-600' : 'text-white';
 
@@ -165,7 +166,7 @@ const Header = () => {
                 className={`w-full fixed top-0 left-0 z-50 transition-all duration-500 ${headerStyle}`}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-full gap-4">
-                    
+
                     {/* Logo Section */}
                     <Link to="/" className="flex items-center gap-2 flex-shrink-0">
                         <motion.img
@@ -186,15 +187,14 @@ const Header = () => {
                             <Link
                                 key={item.to}
                                 to={item.to}
-                                className={`px-4 py-2 rounded-xl text-sm font-black uppercase tracking-widest transition-all relative overflow-hidden group ${
-                                    location.pathname === item.to
-                                    ? ((isScrolled || !isHomePage) ? 'text-red-600 bg-red-50' : 'text-white bg-white/10')
-                                    : ((isScrolled || !isHomePage) ? 'text-gray-500 hover:text-red-600 hover:bg-red-50/50' : 'text-red-100 hover:text-white hover:bg-white/5')
-                                }`}
+                                className={`px-4 py-2 rounded-xl text-sm font-black uppercase tracking-widest transition-all relative overflow-hidden group ${location.pathname === item.to
+                                        ? ((isScrolled || !isHomePage) ? 'text-red-600 bg-red-50' : 'text-white bg-white/10')
+                                        : ((isScrolled || !isHomePage) ? 'text-gray-500 hover:text-red-600 hover:bg-red-50/50' : 'text-red-100 hover:text-white hover:bg-white/5')
+                                    }`}
                             >
                                 {item.label}
                                 {location.pathname === item.to && (
-                                    <motion.div 
+                                    <motion.div
                                         layoutId="navTab"
                                         className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${(isScrolled || !isHomePage) ? 'bg-red-600' : 'bg-white'}`}
                                     />
@@ -205,32 +205,30 @@ const Header = () => {
 
                     {/* Action Right Section */}
                     <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
-                        
+
                         {/* Search Toggle (Desktop) */}
                         <div className="hidden lg:block w-56 xl:w-72">
                             <SearchBar isCompact={true} className="!max-w-full" />
                         </div>
 
                         {/* Search Toggle (Mobile) */}
-                        <button 
+                        <button
                             onClick={() => setIsSearchVisible(!isSearchVisible)}
-                            className={`lg:hidden p-2 rounded-xl transition-all ${
-                                (isScrolled || !isHomePage) ? 'bg-gray-100 text-gray-600' : 'bg-white/10 text-white'
-                            }`}
+                            className={`lg:hidden p-2 rounded-xl transition-all ${(isScrolled || !isHomePage) ? 'bg-gray-100 text-gray-600' : 'bg-white/10 text-white'
+                                }`}
                         >
                             {isSearchVisible ? <FaTimes className="text-xs" /> : <FaSearch className="text-xs" />}
                         </button>
 
                         {!user ? (
                             <div className="hidden sm:flex items-center gap-1.5">
-                                <Link to="/login" className={`px-4 py-2 text-[11px] font-black uppercase tracking-widest transition-all ${
-                                    (isScrolled || !isHomePage) ? 'text-gray-600 hover:text-red-600' : 'text-white hover:text-red-100'
-                                }`}>Login</Link>
+                                <Link to="/login" className={`px-4 py-2 text-[11px] font-black uppercase tracking-widest transition-all ${(isScrolled || !isHomePage) ? 'text-gray-600 hover:text-red-600' : 'text-white hover:text-red-100'
+                                    }`}>Login</Link>
                                 <Link to="/signup" className="px-5 py-2.5 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-100 hover:bg-red-700 transition-all">Sign Up</Link>
                             </div>
                         ) : (
                             <div className="relative" ref={dropdownRef}>
-                                <motion.div 
+                                <motion.div
                                     onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
@@ -238,7 +236,16 @@ const Header = () => {
                                 >
                                     <div className="relative">
                                         <img
-                                            src={user.user_img ? (user.user_img.startsWith('http') ? user.user_img : `${import.meta.env.VITE_URL}${user.user_img}`) : "https://i.pravatar.cc/100?u=foodio"}
+                                            src={USER.user_img
+                                                ? (USER.user_img.startsWith('http')
+                                                    ? USER.user_img
+                                                    : (() => {
+                                                        const cleanPath = USER.user_img.includes('uploads')
+                                                            ? '/uploads/' + USER.user_img.split('uploads').pop().replace(/\\/g, '/').replace(/^\//, '')
+                                                            : USER.user_img;
+                                                        return `${import.meta.env.VITE_URL.replace('/api', '')}${cleanPath}?t=${Date.now()}`;
+                                                    })())
+                                                : "https://i.pravatar.cc/100?u=foodio"}
                                             alt="profile"
                                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-red-500"
                                         />
@@ -259,9 +266,18 @@ const Header = () => {
                                             className="absolute right-0 mt-3 w-72 bg-white rounded-[2rem] shadow-2xl border border-gray-100 p-5 z-[60]"
                                         >
                                             <div className="flex items-center gap-4 mb-6 p-1">
-                                                <img 
-                                                    src={user.user_img ? (user.user_img.startsWith('http') ? user.user_img : `${import.meta.env.VITE_URL}${user.user_img}`) : "https://i.pravatar.cc/100?u=foodio"} 
-                                                    className="w-14 h-14 rounded-2xl object-cover shadow-inner" alt="" 
+                                                <img
+                                                    src={user.user_img
+                                                        ? (user.user_img.startsWith('http')
+                                                            ? user.user_img
+                                                            : (() => {
+                                                                const cleanPath = user.user_img.includes('uploads')
+                                                                    ? '/uploads/' + user.user_img.split('uploads').pop().replace(/\\/g, '/').replace(/^\//, '')
+                                                                    : user.user_img;
+                                                                return `${import.meta.env.VITE_URL.replace('/api', '')}${cleanPath}?t=${Date.now()}`;
+                                                            })())
+                                                        : "https://i.pravatar.cc/100?u=foodio"}
+                                                    className="w-14 h-14 rounded-2xl object-cover shadow-inner" alt=""
                                                 />
                                                 <div className="flex-1 truncate">
                                                     <h4 className="font-black text-gray-800 text-base leading-tight truncate">{user.user_name}</h4>
@@ -275,7 +291,7 @@ const Header = () => {
                                                 <button onClick={navigateToDashboard} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-600 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all">
                                                     <FaTachometerAlt className="text-sm text-red-500" /> My Workspace
                                                 </button>
-                                                <button onClick={() => {setIsEditModalOpen(true); setIsProfileDropdownOpen(false)}} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-600 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all">
+                                                <button onClick={() => { setIsEditModalOpen(true); setIsProfileDropdownOpen(false) }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-600 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all">
                                                     <FaUserCog className="text-sm text-blue-500" /> Account Settings
                                                 </button>
                                                 <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-red-500 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all mt-2 border-t border-gray-50 pt-3">
@@ -292,9 +308,8 @@ const Header = () => {
                         <motion.button
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className={`lg:hidden p-2.5 rounded-2xl transition-all ${
-                                isScrolled ? 'bg-red-600 text-white' : 'bg-white/20 text-white'
-                            }`}
+                            className={`lg:hidden p-2.5 rounded-2xl transition-all ${isScrolled ? 'bg-red-600 text-white' : 'bg-white/20 text-white'
+                                }`}
                         >
                             {isMenuOpen ? <FaTimes /> : <FaBars />}
                         </motion.button>
@@ -304,7 +319,7 @@ const Header = () => {
                 {/* Mobile Search Overlay */}
                 <AnimatePresence>
                     {isSearchVisible && (
-                        <motion.div 
+                        <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
@@ -320,7 +335,7 @@ const Header = () => {
             <AnimatePresence>
                 {isMenuOpen && (
                     <>
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
@@ -340,7 +355,7 @@ const Header = () => {
                                     <FaTimes />
                                 </button>
                             </div>
-                            
+
                             <nav className="flex-1 px-6 py-8 flex flex-col gap-2">
                                 {navItems.map((item, i) => (
                                     <motion.div
@@ -349,19 +364,18 @@ const Header = () => {
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.05 }}
                                     >
-                                        <Link 
+                                        <Link
                                             to={item.to}
                                             onClick={() => setIsMenuOpen(false)}
-                                            className={`flex items-center gap-4 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
-                                                location.pathname === item.to ? 'bg-red-600 text-white' : 'text-gray-500 hover:bg-red-50 hover:text-red-600'
-                                            }`}
+                                            className={`flex items-center gap-4 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${location.pathname === item.to ? 'bg-red-600 text-white' : 'text-gray-500 hover:bg-red-50 hover:text-red-600'
+                                                }`}
                                         >
                                             <span className="text-lg">{item.icon}</span>
                                             {item.label}
                                         </Link>
                                     </motion.div>
                                 ))}
-                                
+
                                 {!user && (
                                     <div className="mt-8 grid grid-cols-2 gap-3">
                                         <Link to="/login" onClick={() => setIsMenuOpen(false)} className="py-4 bg-gray-100 text-gray-800 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest">Login</Link>
@@ -372,10 +386,19 @@ const Header = () => {
 
                             {user && (
                                 <div className="p-8 bg-gray-50 flex items-center gap-4">
-                                    <img 
-                                        src={user.user_img ? (user.user_img.startsWith('http') ? user.user_img : `${import.meta.env.VITE_URL}${user.user_img}`) : "https://i.pravatar.cc/100?u=foodio"} 
-                                        className="w-12 h-12 rounded-2xl object-cover" 
-                                        alt="" 
+                                    <img
+                                        src={user.user_img
+                                            ? (user.user_img.startsWith('http')
+                                                ? user.user_img
+                                                : (() => {
+                                                    const cleanPath = user.user_img.includes('uploads')
+                                                        ? '/uploads/' + user.user_img.split('uploads').pop().replace(/\\/g, '/').replace(/^\//, '')
+                                                        : user.user_img;
+                                                    return `${import.meta.env.VITE_URL.replace('/api', '')}${cleanPath}?t=${Date.now()}`;
+                                                })())
+                                            : "https://i.pravatar.cc/100?u=foodio"}
+                                        className="w-12 h-12 rounded-2xl object-cover"
+                                        alt=""
                                     />
                                     <div className="flex-1 truncate">
                                         <p className="font-black text-gray-800 leading-none truncate">{user.user_name}</p>
@@ -407,28 +430,28 @@ const Header = () => {
                             <form onSubmit={handleUpdateProfile} className="p-8 space-y-5">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-1">Display Name</label>
-                                    <input 
+                                    <input
                                         value={editForm.user_name}
-                                        onChange={e => setEditForm({...editForm, user_name: e.target.value})}
+                                        onChange={e => setEditForm({ ...editForm, user_name: e.target.value })}
                                         className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-red-500 transition-all outline-none"
                                     />
                                 </div>
-                                
+
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-1">Phone Number</label>
-                                    <input 
+                                    <input
                                         value={editForm.user_phone}
-                                        onChange={e => setEditForm({...editForm, user_phone: e.target.value})}
+                                        onChange={e => setEditForm({ ...editForm, user_phone: e.target.value })}
                                         className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-red-500 transition-all outline-none"
                                     />
                                 </div>
 
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-1">Physical Address</label>
-                                    <textarea 
+                                    <textarea
                                         rows="2"
                                         value={editForm.user_address}
-                                        onChange={e => setEditForm({...editForm, user_address: e.target.value})}
+                                        onChange={e => setEditForm({ ...editForm, user_address: e.target.value })}
                                         className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-red-500 transition-all outline-none resize-none"
                                     ></textarea>
                                 </div>
@@ -439,9 +462,9 @@ const Header = () => {
                                         <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 overflow-hidden border border-gray-200">
                                             {editForm.user_img ? <img src={URL.createObjectURL(editForm.user_img)} className="w-full h-full object-cover" /> : <FaUser />}
                                         </div>
-                                        <input 
+                                        <input
                                             type="file"
-                                            onChange={e => setEditForm({...editForm, user_img: e.target.files[0]})}
+                                            onChange={e => setEditForm({ ...editForm, user_img: e.target.files[0] })}
                                             className="flex-1 text-xs text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-red-50 file:text-red-700 hover:file:bg-red-100 transition-all"
                                         />
                                     </div>

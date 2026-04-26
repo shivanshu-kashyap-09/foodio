@@ -263,7 +263,7 @@ const Home = () => {
 
   const handleVeg = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/menus/veg?page=1&limit=20`);
+      const response = await axios.get(`${import.meta.env.VITE_URL}/menus/veg?page=1&limit=12`);
       if (response.status == 200) {
         setVegDish(response.data.data);
       }
@@ -274,7 +274,7 @@ const Home = () => {
 
   const handleNonVeg = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/menus/nonveg?page=1&limit=20`);
+      const response = await axios.get(`${import.meta.env.VITE_URL}/menus/nonveg?page=1&limit=12`);
       if (response.status == 200) {
         setNonVegDish(response.data.data);
       }
@@ -285,7 +285,7 @@ const Home = () => {
 
   const handleSouth = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_URL}/menus/southindian?page=1&limit=20`);
+      const response = await axios.get(`${import.meta.env.VITE_URL}/menus/southindian?page=1&limit=12`);
       if (response.status == 200) {
         setSouthDish(response.data.data);
       }
